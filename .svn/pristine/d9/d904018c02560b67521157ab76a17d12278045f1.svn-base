@@ -1,0 +1,343 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package FoodMart;
+
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXComboBox;
+import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.controls.JFXTreeView;
+import com.jfoenix.validation.RequiredFieldValidator;
+import dao.AdminSession;
+import dao.Category;
+import dao.CategoryDAO;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.Optional;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.cell.PropertyValueFactory;
+
+/**
+ *
+ * @author Admin
+ */
+public class CategoryController {
+
+    private CategoryDAO categoryDao = new CategoryDAO();
+
+    private Category editCategory = null;
+
+    private ChangeListener<String> inputListener;
+
+    @FXML
+    private TableView<Category> tvCategories;
+
+    @FXML
+    private TableColumn<Category, String> tcCategoryName;
+
+    @FXML
+    private TableColumn<Category, String> tcParentCategory;
+
+    @FXML
+    private JFXTreeView<Category> treeView;
+
+    @FXML
+    private Label lbEditor;
+
+    @FXML
+    private JFXTextField txtCategoryName;
+
+    @FXML
+    private JFXButton admin;
+
+    @FXML
+    private TextField filterField;
+
+    @FXML
+    void refresh(ActionEvent event) {
+        buildTreeView();
+        buildTableviewData();
+    }
+
+    @FXML
+    private JFXComboBox<Category> cbParentCategory;
+
+    @FXML
+    void gotoOrder(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoOrderIndex();
+    }
+
+    @FXML
+    void btnAdminsClick(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoAdminIndex();
+    }
+
+    @FXML
+    void btnCategoriesClick(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoCategoryIndex();
+    }
+
+    @FXML
+    void btnCustomersClick(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoCustomerIndex();
+    }
+
+    @FXML
+    void btnProductsClick(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoProductIndex();
+    }
+
+    @FXML
+    void btnLogoutClick(ActionEvent event) throws IOException {
+        AdminSession.getInstance().clearAdminSession();
+        Navigator.getInstance().gotoLogin();
+    }
+
+    @FXML
+    void btnClearClick(ActionEvent event) {
+        clearFields();
+    }
+
+    @FXML
+    void btnNew(ActionEvent event) {
+        lbEditor.setText("New Category Details");
+        editCategory = null;
+        buildComboboxItems();
+        clearFields();
+    }
+
+    @FXML
+    void btnEditClick(ActionEvent event) {
+        if (treeView.getSelectionModel().getSelectedItem() == null) {
+            selectWarning();
+        } else {
+            Category selectedCategory = treeView.getSelectionModel().getSelectedItem().getValue();
+            lbEditor.setText("Edit Category Details");
+            editCategory = selectedCategory;
+            buildComboboxItems();
+            txtCategoryName.setText(selectedCategory.getCategoryName());
+        }
+    }
+
+    @FXML
+    void btnSaveClick(ActionEvent event) {
+        txtCategoryName.textProperty().removeListener(inputListener);
+        if (validate()) {
+            Category extracted = extract_category_from_fields();
+            if (categoryDao.isUnique(extracted.getCategoryName())) {
+                if (editCategory == null) {
+                    Category newCategory = categoryDao.insert(extracted);
+                    if (newCategory != null) {
+                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                        alert.setTitle("Notification");
+                        alert.setHeaderText("A new category has been created!");
+                        alert.showAndWait();
+                    } else {
+                        Alert alert = new Alert(Alert.AlertType.ERROR);
+                        alert.setTitle("Error");
+                        alert.setHeaderText("Some error happened.");
+                        alert.showAndWait();
+                    }
+                } else {
+                    extracted.setCategoryId(editCategory.getCategoryId());
+                    boolean result = categoryDao.update(extracted);
+                    if (result) {
+                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                        alert.setTitle("Notification");
+                        alert.setHeaderText("This category has been edited!");
+                        alert.showAndWait();
+                    } else {
+                        Alert alert = new Alert(Alert.AlertType.ERROR);
+                        alert.setTitle("Error");
+                        alert.setHeaderText("Some error happened.");
+                        alert.showAndWait();
+                    }
+                    editCategory = null;
+                }
+                clearFields();
+                lbEditor.setText("New Category Details");
+            }
+        } else {
+            txtCategoryName.textProperty().addListener(inputListener);
+        }
+    }
+
+    @FXML
+    void btnDeleteClick(ActionEvent event) {
+        if (treeView.getSelectionModel().getSelectedItem() == null) {
+            selectWarning();
+        } else {
+            TreeItem selectedItem = treeView.getSelectionModel().getSelectedItem();
+            Category selectedCategory = (Category) selectedItem.getValue();
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("DELETE");
+            alert.setHeaderText("Are you sure you want to delete this category?");
+            Optional<ButtonType> confirmationResponse = alert.showAndWait();
+            if (confirmationResponse.get() == ButtonType.OK) {
+                boolean result = categoryDao.delete(selectedCategory);
+                if (result) {
+                    selectedItem.getParent().getChildren().remove(selectedItem);
+                } else {
+                    Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                    errorAlert.setTitle("Error");
+                    errorAlert.setHeaderText("Some error happened.");
+                    errorAlert.showAndWait();
+                }
+            }
+            lbEditor.setText("New Category Details");
+            editCategory = null;
+        }
+    }
+
+    private void buildComboboxItems() {
+        cbParentCategory.getItems().clear();
+        Category none = new Category();
+        none.setCategoryName("None");
+        cbParentCategory.getItems().add(none);
+        cbParentCategory.getItems().addAll(categoryDao.selectAll());
+        if (editCategory != null) {
+            for (int i = 0; i < cbParentCategory.getItems().size(); i++) {
+                if (editCategory.getCategoryId().equals(cbParentCategory.getItems().get(i).getCategoryId())) {
+                    cbParentCategory.getItems().remove(cbParentCategory.getItems().get(i));
+                } else if (editCategory.getParentId().equals(cbParentCategory.getItems().get(i).getCategoryId())) {
+                    cbParentCategory.setValue(cbParentCategory.getItems().get(i));
+                }
+            }
+        }
+    }
+
+    private boolean validate() {
+        RequiredFieldValidator required = new RequiredFieldValidator();
+        required.setMessage("Input Required");
+        txtCategoryName.getValidators().add(required);
+        return txtCategoryName.validate();
+    }
+
+    private Category extract_category_from_fields() {
+        Category c = new Category();
+        c.setCategoryName(txtCategoryName.getText());
+        if (cbParentCategory.getValue() != null && !cbParentCategory.getValue().getCategoryName().equals("none")) {
+            c.setParentId(cbParentCategory.getValue().getCategoryId());
+        }
+        return c;
+    }
+
+    private void selectWarning() {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("WARNING");
+        alert.setHeaderText("Please select a category to perform this operation!");
+        alert.showAndWait();
+    }
+
+    private void buildTableviewData() {
+        ObservableList<Category> categories;
+        categories = categoryDao.selectAll();
+        tvCategories.setItems(categories);
+        tcCategoryName.setCellValueFactory((category) -> {
+            return category.getValue().getCategoryNameProperty();
+        });
+        tcParentCategory.setCellValueFactory((category) -> {
+            return category.getValue().getParentProperty();
+        });
+    }
+
+    private void clearFields() {
+        txtCategoryName.setText("");
+    }
+
+    private ObservableList<Category> dataList = FXCollections.observableArrayList();
+
+    @FXML
+    void search() {
+        tcCategoryName.setCellValueFactory(new PropertyValueFactory<Category, String>("categoryName"));
+        tcParentCategory.setCellValueFactory(new PropertyValueFactory<Category, String>("parent"));
+        dataList = categoryDao.selectAll();
+        tvCategories.setItems(dataList);
+
+        FilteredList<Category> filteredData = new FilteredList<>(dataList, b -> true);
+        filterField.textProperty().addListener((observable, oldValue, newValue) -> {
+            filteredData.setPredicate(category -> {
+
+                if (newValue == null || newValue.isEmpty()) {
+                    return true;
+                }
+                String lowerCaseFilter = newValue.toLowerCase();
+
+                if (String.valueOf(category.getCategoryId()).indexOf(lowerCaseFilter) != -1) {
+                    return true;
+                }
+
+                if (category.getCategoryName().toLowerCase().indexOf(lowerCaseFilter) != -1) {
+                    return true;
+                } else if (String.valueOf(category.getParent()).indexOf(lowerCaseFilter) != -1) {
+                    return true;
+                } else {
+                    return false;
+                }
+
+            });
+        });
+        SortedList<Category> sortedData = new SortedList<>(filteredData);
+        sortedData.comparatorProperty().bind(tvCategories.comparatorProperty());
+        tvCategories.setItems(sortedData);
+    }
+
+    private TreeItem<Category> getCategoryTree(Category category) throws SQLException {
+        TreeItem<Category> treeCategory = new TreeItem(category);
+        ObservableList<Category> subCategories = categoryDao.selectSub(category.getCategoryId());
+        for (Category c : subCategories) {
+            TreeItem<Category> tc = new TreeItem(c);
+            if (categoryDao.selectSub(c.getCategoryId()).size() > 0) {
+                tc = getCategoryTree(c);
+            }
+            treeCategory.getChildren().add(tc);
+        }
+        treeCategory.setExpanded(true);
+        return treeCategory;
+    }
+
+    private void buildTreeView() {
+        TreeItem<Category> root = new TreeItem();
+        ObservableList<Category> categories = categoryDao.selectMain();
+        categories.forEach((c) -> {
+            try {
+                root.getChildren().add(getCategoryTree(c));
+            } catch (SQLException ex) {
+                System.err.println(ex);
+            }
+        });
+        treeView.setRoot(root);
+        root.setExpanded(true);
+    }
+
+    public void initialize() throws SQLException {
+        buildTableviewData();
+        admin.setText(AdminSession.getInstance().getEmail());
+        buildTreeView();
+        inputListener = new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> o, String oldVal, String newVal) {
+                if (newVal == null ? oldVal != null : !newVal.equals(oldVal)) {
+                    txtCategoryName.validate();
+                }
+            }
+        };
+    }
+
+}

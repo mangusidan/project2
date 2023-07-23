@@ -1,0 +1,258 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package FoodMart;
+
+import com.jfoenix.controls.JFXPasswordField;
+import com.jfoenix.controls.JFXRadioButton;
+import com.jfoenix.controls.JFXSpinner;
+import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.validation.NumberValidator;
+import com.jfoenix.validation.RegexValidator;
+import com.jfoenix.validation.RequiredFieldValidator;
+import dao.AdminDAO;
+import dao.AdminSession;
+import dao.Customer;
+import dao.CustomerDAO;
+import dao.CustomerSession;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.control.Label;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.layout.Pane;
+import javax.xml.bind.DatatypeConverter;
+
+/**
+ *
+ * @author Admin
+ */
+public class LoginController {
+
+    private CustomerDAO customerDao = new CustomerDAO();
+    private AdminDAO adminDao = new AdminDAO();
+
+    @FXML
+    private ToggleGroup role;
+
+    @FXML
+    private JFXRadioButton btnAdmin;
+
+    @FXML
+    private Pane paneAdmin;
+
+    @FXML
+    private JFXTextField txtAdminEmail;
+
+    @FXML
+    private JFXPasswordField txtAdminPwd;
+
+    @FXML
+    private Pane paneCustomer;
+
+    @FXML
+    private JFXTextField txtCustomerEmail;
+
+    @FXML
+    private JFXPasswordField txtCustomerPwd;
+
+    @FXML
+    private Label errorAdmin;
+
+    @FXML
+    private Label error;
+
+    @FXML
+    private Pane paneRegister;
+
+    @FXML
+    private JFXTextField txtFullName;
+
+    @FXML
+    private JFXPasswordField txtUserPwd;
+
+    @FXML
+    private JFXPasswordField txtConfirmPwd;
+
+    @FXML
+    private JFXTextField txtPhone;
+
+    @FXML
+    private JFXTextField txtEmail;
+
+    @FXML
+    private Label noti;
+
+    @FXML
+    private JFXSpinner spinner;
+
+    @FXML
+    void gotoSignup(ActionEvent event) {
+        paneRegister.toFront();
+    }
+
+    @FXML
+    void gotoLogin(ActionEvent event) {
+        paneCustomer.toFront();
+    }
+
+    @FXML
+    void signup(ActionEvent event) throws NoSuchAlgorithmException {
+        if (validateSignup()) {
+            if (!txtUserPwd.getText().equals(txtConfirmPwd.getText())) {
+                noti.setText("Passwords do not match.");
+            } else {
+                if (customerDao.isUnique(txtEmail.getText())) {
+                    Customer c = new Customer();
+                    c.setFullName(txtFullName.getText());
+                    c.setEmail(txtEmail.getText());
+                    c.setPhone(txtPhone.getText());
+                    c.setPassword(sha1(txtUserPwd.getText()));
+                    CustomerDAO customerDao = new CustomerDAO();
+                    Customer newCustomer = customerDao.insert(c);
+                    if (newCustomer != null) {
+                        noti.setText("Register Successfully! You can login now.");
+                    } else {
+                        noti.setText("Register unsuccesfully.");
+                    }
+                } else {
+                    noti.setText("This email is already registered.");
+                }
+            }
+        }
+    }
+
+    @FXML
+    void toggleRole(ActionEvent event) {
+        if (role.getSelectedToggle().equals(btnAdmin)) {
+            paneAdmin.toFront();
+        } else {
+            paneCustomer.toFront();
+        }
+    }
+
+    @FXML
+    void adminLogin(ActionEvent event) throws NoSuchAlgorithmException, IOException {
+        if (validateAdmin()) {
+            String email = txtAdminEmail.getText();
+            String password = sha1(txtAdminPwd.getText());
+            if (adminDao.authenticateAdmin(email, password)) {
+                spinner.setVisible(true);
+                AdminSession.getInstance().setEmail(email);
+                Navigator.getInstance().gotoProductIndex();
+            } else {
+                errorAdmin.setText("Authentication failed!");
+            }
+        }
+    }
+
+    @FXML
+    void customerLogin(ActionEvent event) throws NoSuchAlgorithmException, IOException {
+        if (validateCustomer()) {
+            String email = txtCustomerEmail.getText();
+            String password = sha1(txtCustomerPwd.getText());
+            if (customerDao.authenticateCustomer(email, password)) {
+                spinner.setVisible(true);
+                CustomerSession.getInstance().setEmail(email);
+                CustomerSession.getInstance().setProducts();
+                Navigator.getInstance().gotoHome();
+            } else {
+                error.setText("Authentication failed!");
+            }
+        }
+    }
+
+    public String sha1(String input) throws NoSuchAlgorithmException {
+        String sha1 = null;
+        try {
+            MessageDigest msdDigest = MessageDigest.getInstance("SHA-1");
+            msdDigest.update(input.getBytes("UTF-8"), 0, input.length());
+            sha1 = DatatypeConverter.printHexBinary(msdDigest.digest());
+        } catch (UnsupportedEncodingException | NoSuchAlgorithmException e) {
+//        Logger.getLogger(Encriptacion.class.getName()).log(Level.SEVERE, null, e);
+            System.err.println("sha1 error");
+        }
+        return sha1;
+    }
+
+    private boolean validateAdmin() {
+        RequiredFieldValidator required = new RequiredFieldValidator();
+        required.setMessage("Input Required");
+        txtAdminEmail.getValidators().add(required);
+        txtAdminPwd.getValidators().add(required);
+        txtAdminEmail.textProperty().addListener((o, oldVal, newVal) -> {
+            if (newVal != oldVal) {
+                txtAdminEmail.validate();
+            }
+        });
+        txtAdminPwd.textProperty().addListener((o, oldVal, newVal) -> {
+            if (newVal != oldVal) {
+                txtAdminPwd.validate();
+            }
+        });
+        return !(txtAdminEmail.validate()
+                == false || txtAdminPwd.validate() == false);
+    }
+
+    private boolean validateCustomer() {
+        RequiredFieldValidator required = new RequiredFieldValidator();
+        required.setMessage("Input Required");
+        txtCustomerEmail.getValidators().add(required);
+        txtCustomerPwd.getValidators().add(required);
+        txtCustomerEmail.textProperty().addListener((o, oldVal, newVal) -> {
+            if (newVal != oldVal) {
+                txtCustomerEmail.validate();
+            }
+        });
+        txtCustomerPwd.textProperty().addListener((o, oldVal, newVal) -> {
+            if (newVal != oldVal) {
+                txtCustomerPwd.validate();
+            }
+        });
+        return !(txtCustomerEmail.validate()
+                == false || txtCustomerPwd.validate() == false);
+    }
+
+    private boolean validateSignup() { 
+        RequiredFieldValidator required = new RequiredFieldValidator();
+        NumberValidator number = new NumberValidator();
+        required.setMessage("Input Required");
+        number.setMessage("Must be number");
+        txtFullName.getValidators().add(required);
+        txtUserPwd.getValidators().add(required);
+        txtConfirmPwd.getValidators().add(required);
+        txtPhone.getValidators().addAll(required, number);
+        txtEmail.getValidators().add(required);
+        txtUserPwd.textProperty().addListener((o, oldVal, newVal) -> {
+            if (newVal != oldVal) {
+                txtUserPwd.validate();
+            }
+        });
+        txtConfirmPwd.textProperty().addListener((o, oldVal, newVal) -> {
+            if (newVal != oldVal) {
+                txtConfirmPwd.validate();
+            }
+        });
+        txtFullName.textProperty().addListener((o, oldVal, newVal) -> {
+            if (newVal != oldVal) {
+                txtFullName.validate();
+            }
+        });
+        txtPhone.textProperty().addListener((o, oldVal, newVal) -> {
+            if (newVal != oldVal) {
+                txtPhone.validate();
+            }
+        });
+        txtEmail.textProperty().addListener((o, oldVal, newVal) -> {
+            if (newVal != oldVal) {
+                txtEmail.validate();
+            }
+        });
+        return !(txtFullName.validate() == false || txtEmail.validate() == false || txtPhone.validate() == false || txtUserPwd.validate() == false || txtConfirmPwd.validate() == false);
+    }
+}

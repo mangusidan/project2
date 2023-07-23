@@ -1,0 +1,215 @@
+-- --------------------------------------------------------
+-- Host:                         127.0.0.1
+-- Server version:               10.4.11-MariaDB - mariadb.org binary distribution
+-- Server OS:                    Win64
+-- HeidiSQL Version:             11.0.0.5919
+-- --------------------------------------------------------
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET NAMES utf8 */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+
+
+-- Dumping database structure for foodmart
+DROP DATABASE IF EXISTS `foodmart`;
+CREATE DATABASE IF NOT EXISTS `foodmart` /*!40100 DEFAULT CHARACTER SET utf8mb4 */;
+USE `foodmart`;
+
+-- Dumping structure for table foodmart.admin
+DROP TABLE IF EXISTS `admin`;
+CREATE TABLE IF NOT EXISTS `admin` (
+  `adminID` int(11) NOT NULL AUTO_INCREMENT,
+  `adminName` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  PRIMARY KEY (`adminID`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4;
+
+-- Dumping data for table foodmart.admin: ~4 rows (approximately)
+/*!40000 ALTER TABLE `admin` DISABLE KEYS */;
+INSERT INTO `admin` (`adminID`, `adminName`, `email`, `password_hash`) VALUES
+	(1, 'a', 'a', '356A192B7913B04C54574D18C28D46E6395428AB'),
+	(4, 'thuanh', 'thuanhh96@gmail.com', '356A192B7913B04C54574D18C28D46E6395428AB'),
+	(5, 'manh', 'manhngo@gmail.com', 'DA4B9237BACCCDF19C0760CAB7AEC4A8359010B0'),
+	(6, 'asdf', 'asdfasd', '3C363836CF4E16666669A25DA280A1865C2D2874');
+/*!40000 ALTER TABLE `admin` ENABLE KEYS */;
+
+-- Dumping structure for table foodmart.category
+DROP TABLE IF EXISTS `category`;
+CREATE TABLE IF NOT EXISTS `category` (
+  `categoryID` int(11) NOT NULL AUTO_INCREMENT,
+  `categoryName` varchar(255) NOT NULL,
+  `parent` int(11) DEFAULT NULL,
+  PRIMARY KEY (`categoryID`),
+  KEY `parent` (`parent`),
+  CONSTRAINT `category_ibfk_1` FOREIGN KEY (`parent`) REFERENCES `category` (`categoryID`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=83 DEFAULT CHARSET=utf8mb4;
+
+-- Dumping data for table foodmart.category: ~23 rows (approximately)
+/*!40000 ALTER TABLE `category` DISABLE KEYS */;
+INSERT INTO `category` (`categoryID`, `categoryName`, `parent`) VALUES
+	(1, 'Fresh Food', NULL),
+	(2, 'Fresh Fruit', 1),
+	(3, 'Bakery', NULL),
+	(4, 'Coffee & Tea', NULL),
+	(5, 'Honey, Jam & Syrup', NULL),
+	(6, 'Dairy', NULL),
+	(7, 'Milk', 6),
+	(8, 'Cheese', 6),
+	(9, 'Cooking Cream & Whipping Cream', 6),
+	(10, 'Dried Grain & Beans', NULL),
+	(11, 'Dried Grain', 10),
+	(12, 'Beans', 10),
+	(13, 'Snacks', NULL),
+	(15, 'Beef Jerky', 13),
+	(16, 'Cheddar', 8),
+	(17, 'Blue Cheese', 8),
+	(18, 'Frozen & Refrigerated', NULL),
+	(19, 'Ice Cream', 18),
+	(20, 'Frozen Fish & Seafood', 18),
+	(21, 'Jambon Salami Sausage', 18),
+	(60, 'Coffee', 4),
+	(61, 'Tea', 4),
+	(63, 'Frozen Potatoes & Vegetables', 18);
+/*!40000 ALTER TABLE `category` ENABLE KEYS */;
+
+-- Dumping structure for table foodmart.customer
+DROP TABLE IF EXISTS `customer`;
+CREATE TABLE IF NOT EXISTS `customer` (
+  `customerID` int(11) NOT NULL AUTO_INCREMENT,
+  `fullName` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `address` varchar(255) NOT NULL,
+  `phone` varchar(12) NOT NULL,
+  PRIMARY KEY (`customerID`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4;
+
+-- Dumping data for table foodmart.customer: ~6 rows (approximately)
+/*!40000 ALTER TABLE `customer` DISABLE KEYS */;
+INSERT INTO `customer` (`customerID`, `fullName`, `email`, `password_hash`, `address`, `phone`) VALUES
+	(1, 'a', '', '356A192B7913B04C54574D18C28D46E6395428AB', '', ''),
+	(2, 'Rachel Green', 'rachel@gmail.com', '17BA0791499DB908433B80F37C5FBC89B870084B', 'New York', '01234567891'),
+	(3, 'Monica Geller', 'monica@gmail.com', '356A192B7913B04C54574D18C28D46E6395428AB', 'New York', '0123456789'),
+	(4, 'Ross Geller', 'ross@gmail.com', 'DA4B9237BACCCDF19C0760CAB7AEC4A8359010B0', 'New York', '0123456789'),
+	(5, 'Chandler Bing', 'chandler@gmail.com', 'DA4B9237BACCCDF19C0760CAB7AEC4A8359010B0', 'New York', '0123456789'),
+	(6, 'Joey Tribbiani', 'joey@gmail.com', 'DA4B9237BACCCDF19C0760CAB7AEC4A8359010B0', 'New York', '0123456789');
+/*!40000 ALTER TABLE `customer` ENABLE KEYS */;
+
+-- Dumping structure for table foodmart.order
+DROP TABLE IF EXISTS `order`;
+CREATE TABLE IF NOT EXISTS `order` (
+  `orderId` int(11) NOT NULL AUTO_INCREMENT,
+  `customerId` int(11) NOT NULL,
+  `totalPrice` float NOT NULL DEFAULT 0,
+  `status` varchar(255) NOT NULL DEFAULT 'processing',
+  PRIMARY KEY (`orderId`),
+  KEY `customerId` (`customerId`),
+  CONSTRAINT `order_ibfk_1` FOREIGN KEY (`customerId`) REFERENCES `customer` (`customerID`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4;
+
+-- Dumping data for table foodmart.order: ~4 rows (approximately)
+/*!40000 ALTER TABLE `order` DISABLE KEYS */;
+INSERT INTO `order` (`orderId`, `customerId`, `totalPrice`, `status`) VALUES
+	(1, 2, 0, 'Processing'),
+	(2, 3, 0, 'Cancel'),
+	(3, 4, 0, 'processing'),
+	(4, 5, 0, 'processing'),
+	(5, 6, 0, 'processing');
+/*!40000 ALTER TABLE `order` ENABLE KEYS */;
+
+-- Dumping structure for table foodmart.orderdetail
+DROP TABLE IF EXISTS `orderdetail`;
+CREATE TABLE IF NOT EXISTS `orderdetail` (
+  `orderId` int(11) NOT NULL,
+  `productId` int(11) NOT NULL,
+  `quantity` int(11) NOT NULL,
+  `unitPrice` float NOT NULL DEFAULT 0,
+  PRIMARY KEY (`orderId`,`productId`),
+  KEY `productId` (`productId`),
+  CONSTRAINT `orderdetail_ibfk_1` FOREIGN KEY (`orderId`) REFERENCES `order` (`orderId`),
+  CONSTRAINT `orderdetail_ibfk_2` FOREIGN KEY (`productId`) REFERENCES `product` (`productID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Dumping data for table foodmart.orderdetail: ~3 rows (approximately)
+/*!40000 ALTER TABLE `orderdetail` DISABLE KEYS */;
+INSERT INTO `orderdetail` (`orderId`, `productId`, `quantity`, `unitPrice`) VALUES
+	(2, 27, 3, 195000),
+	(2, 41, 1, 37000),
+	(2, 59, 2, 380000);
+/*!40000 ALTER TABLE `orderdetail` ENABLE KEYS */;
+
+-- Dumping structure for table foodmart.product
+DROP TABLE IF EXISTS `product`;
+CREATE TABLE IF NOT EXISTS `product` (
+  `productID` int(11) NOT NULL AUTO_INCREMENT,
+  `productName` varchar(255) NOT NULL,
+  `price` float NOT NULL,
+  `stock` int(11) NOT NULL,
+  `description` varchar(255) NOT NULL,
+  `image` varchar(255) NOT NULL,
+  `categoryID` int(11) DEFAULT NULL,
+  PRIMARY KEY (`productID`),
+  KEY `categoryID` (`categoryID`),
+  CONSTRAINT `product_ibfk_1` FOREIGN KEY (`categoryID`) REFERENCES `category` (`categoryID`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=78 DEFAULT CHARSET=utf8mb4;
+
+-- Dumping data for table foodmart.product: ~50 rows (approximately)
+/*!40000 ALTER TABLE `product` DISABLE KEYS */;
+INSERT INTO `product` (`productID`, `productName`, `price`, `stock`, `description`, `image`, `categoryID`) VALUES
+	(5, 'Kiwi', 250000, 100, 'Made in Vietnam – The Price displayed corresponds to the price of 1 Kg', 'img/Kiwi.jpg', 2),
+	(10, 'Matcha Milk', 180000, 50, 'Made in Japan-200gr', 'img/Matcha Milk.jpg', 7),
+	(11, 'Matcha', 155000, 50, 'Made in Japan-85g', 'img/Matcha.jpg', 7),
+	(12, 'Matcha Latte Cocos', 98000, 50, 'Made in Germany-250gr', 'img/Matcha Latte Cocos.jpg', 7),
+	(13, 'Nescafé Gold Cappuccino', 85000, 60, 'Made in France-10*20,5gr', 'img/Nescafé Gold Cappuccino.jpg', 60),
+	(14, 'Caffe D’Vita Cappuccino', 185000, 50, 'Made in USA-453gr', 'img/Caffe D’Vita Cappuccino.jpg', 60),
+	(16, 'So good soy milk', 82000, 40, 'Made in Australia', 'img/So good soy milk.jpg', 7),
+	(17, 'Rice Milk', 55000, 50, 'Made in Korea-1000ml', 'img/Rice Milk.jpg', 7),
+	(23, 'Strawberry Cake And Ice Cream', 280000, 50, 'Made in Germany-600g', 'img/Strawberry Cake And Ice Cream.png', 19),
+	(24, 'Socola Ice Cream', 240000, 50, 'Made in Germany-600g', 'img/Socola Ice Cream.png', 19),
+	(25, 'Fish shaped red bean ice cream', 22000, 50, 'Made in Korea-150ml ', 'img/Fish shaped red bean ice cream.jpg', 19),
+	(26, 'Sliced Salmon', 95000, 20, 'Made in Vietnam- 200g', 'img/Sliced Salmon.jpg', 20),
+	(27, 'Almare Crispy fish fillet filled with cheese', 195000, 40, 'Made in Germany - 400g', 'img/Almare Crispy fish fillet filled with cheese.png', 20),
+	(28, 'Natural Salmon Egg', 380000, 20, 'Made in Germany-100g', 'img/Natural Salmon Egg.jpg', 20),
+	(30, 'Pickled Radish', 115000, 50, 'Made in Japan-400g', 'img/Pickled Radish.jpg', 63),
+	(31, 'Mixed Vegetable Beans', 35000, 99, 'Made in Vietnam - 400g', 'img/Mixed Vegetable Beans.jpg', 63),
+	(32, 'Smoked German Sausage', 62000, 50, 'Made in Vietnam - 250g', 'img/Smoked German Sausage.jpg', 21),
+	(33, 'Singapore Sausage', 175000, 30, 'Made in Singapore - 480g', 'img/Singapore Sausage.jpg', 21),
+	(34, 'Russian Salami rolls', 300000, 45, 'Made in Vietnam - 250g', 'img/Russian Salami rolls.jpg', 21),
+	(35, 'Ayam Brand Cà Ngừ Kimchi', 52000, 40, 'Made in Malaysia - 160g ', 'img/Ayam Brand Cà Ngừ Kimchi.jpg', 18),
+	(37, 'Choshita Cá Mòi Tẩm Ướp Vị Gừng', 60000, 30, 'Made in Japan - 70 gr', 'img/Choshita Cá Mòi Tẩm Ướp Vị Gừng.png', 18),
+	(38, 'Bristol Thịt Dăm Bông Nấu Nước Vị Khói', 145000, 20, 'Made in USA - 326gr', 'img/Bristol Thịt Dăm Bông Nấu Nước Vị Khói.jpg', 19),
+	(39, 'Bristol Thịt Dăm Bông Xay', 102000, 30, 'Made in USA 340g', 'img/Bristol Thịt Dăm Bông Xay.jpg', 19),
+	(40, 'Highway Thịt Bắp Bò Đóng Hộp', 90000, 25, 'Made in Singapore- 340g', 'img/Highway Thịt Bắp Bò Đóng Hộp.png', 19),
+	(41, 'Annalisa Đậu Bơ', 37000, 15, 'Made in Italia - 400g', 'img/Annalisa Đậu Bơ.jpg', 20),
+	(42, 'Ayam Brand Đậu Nướng Trong Sốt Cà Chua', 24000, 25, 'Made in Malaysia - 230g', 'img/Ayam Brand Đậu Nướng Trong Sốt Cà Chua.jpg', 20),
+	(43, 'Jack Link’s Thịt Bò Khô Vị Nguyên Bản', 68000, 100, 'Made in New Zealand-25gr', 'img/Jack Link’s Thịt Bò Khô Vị Nguyên Bản.jpg', 15),
+	(44, 'Jack Link’s Thịt Bò Khô Vị Cay Ngọt', 68000, 100, 'Made in New Zealand-25gr', 'img/Jack Link’s Thịt Bò Khô Vị Cay Ngọt.jpg', 15),
+	(45, 'Jack Link’s Thịt Bò Khô Vị Tiêu', 65000, 100, 'Made in New Zealand-25gr', 'img/Jack Link’s Thịt Bò Khô Vị Tiêu.png', 15),
+	(52, 'Bahlsen ABC Bánh Qui Kiểu Nga', 35000, 70, 'Made in Germany - 100g', 'img/Bahlsen ABC Bánh Qui Kiểu Nga.jpg', 13),
+	(53, 'Rice Cracker', 26000, 40, 'Made in Thailand - 25g', 'img/Balance Bánh Gạo Hữu Cơ.png', 13),
+	(54, 'Soy Waffle', 80000, 40, 'Made in Japan - 16pcs', 'img/Bourbon Bánh Xốp Sữa Đậu Nành.jpg', 13),
+	(59, 'Andros Frozen Cherry Puree', 380000, 27, 'Made in Vietnam - 1kg', 'img/andros-frozen-cherry-puree.jpg', 2),
+	(60, 'Blueberries', 105000, 20, 'Made in Vietnam – 125gr', 'img/blueberries.png', 2),
+	(61, 'Firestone Cranberry', 84000, 18, 'Made in USA - 300g', 'img/firestone-franberry.png', 13),
+	(62, 'Rosemary Kitchen Multi-Grain Bread', 45000, 16, 'Vietnam 300gr', 'img/Rosemary Kitchen Multi-Grain Bread.png', 3),
+	(63, 'Germany Garlic Butter Baguette', 65000, 149, 'Germany 175g', 'img/Germany Garlic Butter Baguette.png', 3),
+	(64, 'Saint Honore White Bread Rolls', 15000, 17, 'Vietnam - 60gr x3', 'img/Saint Honore White Bread Rolls.png', 3),
+	(65, 'Dilmah Special Loose Leaf Green Tea', 150000, 20, 'Australia 125gr', 'img/Dilmah Special Loose Leaf Green Tea.png', 61),
+	(66, 'Elephant Bio Relax Chamomile', 120000, 20, 'Netherlands 20 bags', 'img/Elephant Bio Relax Chamomile.png', 61),
+	(67, 'Arborea Latte Semi-Skimmed Milk', 46000, 10, 'Italy - 1L', 'img/Arborea Latte Semi-Skimmed Milk.jpg', 7),
+	(68, 'Devondale Our Creamy One Full Cream Pure Milk', 68000, 20, 'Australia 2L', 'img/Devondale Our Creamy One Full Cream Pure Milk.jpg', 7),
+	(69, 'Lemnos Spreadable Ricotta', 155000, 20, 'Australia 250g', 'img/Lemnos Spreadable Ricotta.png', 8),
+	(70, 'President British Cheddar Mature', 130000, 20, 'UK 200gr', 'img/President British Cheddar Mature.png', 8),
+	(71, 'Lyttos Halloumi Grilled Cheese', 175000, 17, 'Germany 250gr', 'img/Lyttos Halloumi Grilled Cheese.png', 8),
+	(72, 'Gourmet Beluga Lentils', 145000, 20, 'Germany 500g', 'img/Gourmet Beluga Lentils.png', 12),
+	(73, 'GoodHemp Orginal Hemp Seed Heart', 220000, 18, 'United Kingdom 225g', 'img/GoodHemp Orginal Hemp Seed Heart.png', 11),
+	(74, 'Local Legends Original Beef Jerky', 120000, 20, 'Australia 75gr', 'img/Local Legends Original Beef Jerky.png', 15),
+	(75, 'Local Legends Biltong Beef Jerky', 110000, 20, 'Australia 60gr', 'img/Local Legends Biltong Beef Jerky.png', 15);
+/*!40000 ALTER TABLE `product` ENABLE KEYS */;
+
+/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
+/*!40014 SET FOREIGN_KEY_CHECKS=IF(@OLD_FOREIGN_KEY_CHECKS IS NULL, 1, @OLD_FOREIGN_KEY_CHECKS) */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

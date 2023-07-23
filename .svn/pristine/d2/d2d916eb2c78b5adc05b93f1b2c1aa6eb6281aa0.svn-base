@@ -1,0 +1,202 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package dao;
+
+import dbconnection.DbFactory;
+import static dbconnection.DbType.MYSQL;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
+/**
+ *
+ * @author Admin
+ */
+public class ProductDAO implements DAO<Product> {
+
+    @Override
+    public ObservableList<Product> selectAll() {
+        ObservableList<Product> products = FXCollections.observableArrayList();
+
+        try (
+                Connection conn = DbFactory.getConnection(MYSQL);
+                Statement stm = conn.createStatement();
+                ResultSet rs = stm.executeQuery("SELECT product.*, category.categoryName FROM product LEFT JOIN category ON product.categoryID = category.categoryID");) {
+            while (rs.next()) {
+                Product p = new Product();
+                p.setProductId(rs.getInt("productID"));
+                p.setProductName(rs.getString("productName"));
+                p.setPrice(rs.getDouble("price"));
+                p.setStock(rs.getInt("stock"));
+                p.setDescription(rs.getString("description"));
+                p.setImage(rs.getString("image"));
+                p.setCategoryId(rs.getInt("categoryID"));
+                p.setCategoryName(rs.getString("categoryName"));
+                products.add(p);
+            }
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+        return products;
+    }
+
+    @Override
+    public Product insert(Product newProduct) {
+        String sql = "INSERT into product (productName,price,stock,description,image,categoryID) "
+                + "VALUES (?, ?, ?, ?, ?, ?)";
+        ResultSet key = null;
+        try (
+                Connection conn = DbFactory.getConnection(MYSQL);
+                PreparedStatement stmt
+                = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);) {
+
+            stmt.setString(1, newProduct.getProductName());
+            stmt.setDouble(2, newProduct.getPrice());
+            stmt.setInt(3, newProduct.getStock());
+            stmt.setString(4, newProduct.getDescription());
+            stmt.setString(5, newProduct.getImage());
+            stmt.setInt(6, newProduct.getCategoryId());
+
+            int rowInserted = stmt.executeUpdate();
+
+            if (rowInserted == 1) {
+                key = stmt.getGeneratedKeys();
+                key.next();
+                int newKey = key.getInt(1);
+                newProduct.setProductId(newKey);
+                return newProduct;
+            } else {
+                System.err.println("No product inserted");
+                return null;
+            }
+
+        } catch (Exception e) {
+            System.err.println(e);
+            return null;
+        } finally {
+            try {
+                if (key != null) {
+                    key.close();
+                }
+            } catch (SQLException ex) {
+                System.out.println(ex.getMessage());
+            }
+
+        }
+    }
+
+    @Override
+    public boolean update(Product product) {
+        String sql = "UPDATE product SET `productName` = ?, price = ?, stock = ?, description=?, image = ?, categoryID = ?  WHERE productID = ?";
+        try (
+                Connection conn = DbFactory.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);) {
+            stmt.setString(1, product.getProductName());
+            stmt.setDouble(2, product.getPrice());
+            stmt.setInt(3, product.getStock());
+            stmt.setString(4, product.getDescription());
+            stmt.setString(5, product.getImage());
+            stmt.setInt(6, product.getCategoryId());
+            stmt.setInt(7, product.getProductId());
+
+            int updated_num_rows = stmt.executeUpdate();
+            if (updated_num_rows == 1) {
+                return true;
+            } else {
+                System.err.println("error");
+                return false;
+            }
+        } catch (Exception e) {
+            System.err.println(e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean delete(Product product) {
+        String sql = "DELETE FROM product WHERE productID = ?;";
+        try (
+                Connection conn = DbFactory.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);) {
+            stmt.setInt(1, product.getProductId());
+            int del_num_rows = stmt.executeUpdate();
+            if (del_num_rows == 1) {
+                return true;
+            } else {
+//                logger.error(Translator.getResource().getString("delete.error.message"));
+                return false;
+            }
+        } catch (Exception e) {
+//            logger.error(e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public Product select(Integer i) {
+        String sql = "SELECT product.*, category.categoryName FROM `product` LEFT JOIN category ON product.categoryID = category.categoryID WHERE productID = ?";
+        ResultSet rs;
+        try (
+                Connection conn = DbFactory.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);) {
+            stmt.setInt(1, i);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                Product p = new Product();
+                p.setProductId(rs.getInt(1));
+                p.setProductName(rs.getString(2));
+                p.setPrice(rs.getDouble(3));
+                p.setStock(rs.getInt(4));
+                p.setDescription(rs.getString(5));
+                p.setImage(rs.getString(6));
+                p.setCategoryId(rs.getInt(7));
+                p.setCategoryName(rs.getString(8));
+                return p;
+            }
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+            return null;
+        }
+        return null;
+    }
+    
+    public boolean isUnique(String productName){
+        String sql = "SELECT * FROM product WHERE productName = ?";
+        try (
+                Connection conn = DbFactory.getConnection(MYSQL);
+                PreparedStatement stmt = conn.prepareStatement(sql);) {
+            stmt.setString(1, productName);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return false;
+            }
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+        return true;
+    }
+    
+    public boolean isOrdered(Integer productId){
+        String sql = "SELECT * FROM orderDetail WHERE productID = ? LIMIT 1";
+        try (
+                Connection conn = DbFactory.getConnection(MYSQL);
+                PreparedStatement stmt = conn.prepareStatement(sql);) {
+            stmt.setInt(1, productId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return true;
+            }
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+        return false;
+    }
+
+}

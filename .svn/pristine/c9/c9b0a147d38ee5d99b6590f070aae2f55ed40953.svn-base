@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-private xmlns="http://www.netbeans.org/ns/project-private/1">
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="1">
+        <file>
+            <url>src/FoodMart/style.css</url>
+            <bookmark id="1">
+                <name/>
+                <line>88</line>
+                <key/>
+            </bookmark>
+        </file>
+    </editor-bookmarks>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/C:/thuanh_java/FoodMart/Need%20Fix/CartController.java</file>
+            <file>file:/C:/thuanh_java/FoodMart/src/FoodMart/style.css</file>
+            <file>file:/C:/thuanh_java/FoodMart/src/FoodMart/OrderController.java</file>
+            <file>file:/C:/thuanh_java/FoodMart/src/FoodMart/ProductController.java</file>
+            <file>file:/C:/thuanh_java/FoodMart/src/dao/OrderDAO.java</file>
+            <file>file:/C:/thuanh_java/FoodMart/src/FoodMart/Main.java</file>
+            <file>file:/C:/thuanh_java/FoodMart/src/FoodMart/CategoryController.java</file>
+            <file>file:/C:/thuanh_java/FoodMart/src/FoodMart/ProductEditController.java</file>
+            <file>file:/C:/thuanh_java/FoodMart/src/FoodMart/AdminController.java</file>
+        </group>
+    </open-files>
+</project-private>

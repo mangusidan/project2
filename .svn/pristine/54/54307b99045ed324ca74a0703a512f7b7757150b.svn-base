@@ -1,0 +1,181 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package FoodMart;
+
+import com.jfoenix.controls.JFXPasswordField;
+import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.validation.RequiredFieldValidator;
+import dao.Customer;
+import dao.CustomerDAO;
+import dao.CustomerSession;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.sql.SQLException;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.control.Label;
+import javax.xml.bind.DatatypeConverter;
+
+/**
+ *
+ * @author Admin
+ */
+public class MyAccountController {
+
+    private Customer customer;
+    CustomerDAO customerDao = new CustomerDAO();
+
+    @FXML
+    private JFXTextField txtFullName;
+
+    @FXML
+    private JFXTextField txtEmail;
+
+    @FXML
+    private JFXPasswordField txtPwd;
+
+    @FXML
+    private JFXTextField txtAddress;
+
+    @FXML
+    private JFXTextField txtPhone;
+
+    @FXML
+    private Label noti;
+
+    @FXML
+    private JFXPasswordField txtNewPwd;
+
+    @FXML
+    private JFXPasswordField txtConfirmPwd;
+
+    @FXML
+    private JFXTextField txtSearch;
+
+    @FXML
+    void goToHome(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoHome();
+    }
+
+    @FXML
+    void goToMyAccount(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoMyAccount();
+    }
+
+    @FXML
+    void logout(ActionEvent event) throws IOException {
+        CustomerSession.getInstance().clearCustomerSession();
+        Navigator.getInstance().gotoLogin();
+    }
+
+    @FXML
+    void save(ActionEvent event) throws NoSuchAlgorithmException {
+        if (validate()) {
+            customer.setFullName(txtFullName.getText());
+            customer.setEmail(txtEmail.getText());
+            customer.setAddress(txtAddress.getText());
+            customer.setPhone(txtPhone.getText());
+            if (!txtPwd.getText().equals("")) {
+                if (customerDao.authenticateCustomer(sha1(txtPwd.getText()))) {
+                    if (txtNewPwd.getText().equals(txtConfirmPwd.getText())) {
+                        customer.setPassword(sha1(txtNewPwd.getText()));
+                        boolean result = customerDao.update(customer);
+                        if (result) {
+                            noti.setText("Account details changed succesfully");
+                        } else {
+                            noti.setText("Some error happened. Changes are not applied.");
+                        }
+                    } else {
+                        noti.setText("Passwords do not match");
+                    }
+                } else {
+                    noti.setText("You entered the wrong password.");
+                }
+            } else {
+                boolean result = customerDao.update(customer);
+                if (result) {
+                    noti.setText("Account details changed succesfully");
+                } else {
+                    noti.setText("Some error happened. Changes are not applied.");
+                }
+            }
+        }
+    }
+    
+    public String sha1(String input) throws NoSuchAlgorithmException {
+        String sha1 = null;
+        try {
+            MessageDigest msdDigest = MessageDigest.getInstance("SHA-1");
+            msdDigest.update(input.getBytes("UTF-8"), 0, input.length());
+            sha1 = DatatypeConverter.printHexBinary(msdDigest.digest());
+        } catch (UnsupportedEncodingException | NoSuchAlgorithmException e) {
+//        Logger.getLogger(Encriptacion.class.getName()).log(Level.SEVERE, null, e);
+            System.err.println("sha1 error");
+        }
+        return sha1;
+    }
+
+    private boolean validate() {
+        RequiredFieldValidator required = new RequiredFieldValidator();
+        required.setMessage("Input Required");
+        txtFullName.getValidators().add(required);
+        txtAddress.getValidators().add(required);
+        txtPhone.getValidators().add(required);
+        txtEmail.getValidators().add(required);
+        if (!txtPwd.getText().equals("") || !txtNewPwd.getText().equals("") || !txtConfirmPwd.getText().equals("")) {
+            txtPwd.getValidators().add(required);
+            txtNewPwd.getValidators().add(required);
+            txtConfirmPwd.getValidators().add(required);
+        }
+        txtFullName.textProperty().addListener((o, oldVal, newVal) -> {
+            if (newVal != oldVal) {
+                txtFullName.validate();
+            }
+        });
+        txtAddress.textProperty().addListener((o, oldVal, newVal) -> {
+            if (newVal != oldVal) {
+                txtAddress.validate();
+            }
+        });
+        txtPhone.textProperty().addListener((o, oldVal, newVal) -> {
+            if (newVal != oldVal) {
+                txtPhone.validate();
+            }
+        });
+        txtEmail.textProperty().addListener((o, oldVal, newVal) -> {
+            if (newVal != oldVal) {
+                txtEmail.validate();
+            }
+        });
+        txtPwd.textProperty().addListener((o, oldVal, newVal) -> {
+            if (newVal != oldVal) {
+                txtPwd.validate();
+            }
+        });
+        txtNewPwd.textProperty().addListener((o, oldVal, newVal) -> {
+            if (newVal != oldVal) {
+                txtNewPwd.validate();
+            }
+        });
+        txtConfirmPwd.textProperty().addListener((o, oldVal, newVal) -> {
+            if (newVal != oldVal) {
+                txtConfirmPwd.validate();
+            }
+        });
+        return !(txtFullName.validate() == false || txtEmail.validate() == false || txtAddress.validate() == false || txtPhone.validate() == false || txtPwd.validate() == false || txtNewPwd.validate() == false || txtConfirmPwd.validate() == false);
+    }
+
+    public void initialize() throws SQLException {
+        String email = CustomerSession.getInstance().getEmail();
+        customer = customerDao.select(email);
+        txtFullName.setText(customer.getFullName());
+        txtEmail.setText(customer.getEmail());
+        txtAddress.setText(customer.getAddress());
+        txtPhone.setText(customer.getPhone());
+    }
+}

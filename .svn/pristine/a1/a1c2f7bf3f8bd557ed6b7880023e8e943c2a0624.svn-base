@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<AnchorPane id="AnchorPane" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="FoodMart.DetailController">
+   <children>
+      <Label fx:id="lbProductName" layoutX="221.0" layoutY="14.0" prefHeight="17.0" prefWidth="139.0" />
+      <HBox layoutY="56.0" prefHeight="344.0" prefWidth="600.0">
+         <children>
+            <ImageView fx:id="imgProduct" fitHeight="344.0" fitWidth="271.0" pickOnBounds="true" preserveRatio="true" />
+            <VBox prefHeight="344.0" prefWidth="328.0">
+               <children>
+                  <HBox prefHeight="65.0" prefWidth="328.0">
+                     <children>
+                        <Text fill="#1105fc" strokeType="OUTSIDE" strokeWidth="0.0" text="Price :">
+                           <font>
+                              <Font name="System Bold" size="18.0" />
+                           </font>
+                        </Text>
+                        <Label fx:id="lbPrice" />
+                     </children>
+                  </HBox>
+                  <HBox prefHeight="65.0" prefWidth="328.0">
+                     <children>
+                        <Text fill="#0c08ff" strokeType="OUTSIDE" strokeWidth="0.0" text="Stock :">
+                           <font>
+                              <Font name="System Bold" size="18.0" />
+                           </font>
+                        </Text>
+                        <Label fx:id="lbStock" />
+                     </children>
+                  </HBox>
+                  <HBox prefHeight="187.0" prefWidth="328.0">
+                     <children>
+                        <Text fill="#000be4" strokeType="OUTSIDE" strokeWidth="0.0" text="Description :">
+                           <font>
+                              <Font name="System Bold" size="18.0" />
+                           </font>
+                        </Text>
+                        <Label fx:id="lbDescription" />
+                     </children>
+                  </HBox>
+                  <HBox prefHeight="65.0" prefWidth="328.0">
+                     <children>
+                        <Text fill="#3c00ff" strokeType="OUTSIDE" strokeWidth="0.0" text="Quantity :">
+                           <font>
+                              <Font name="System Bold" size="18.0" />
+                           </font>
+                        </Text>
+                        <TextField fx:id="txtQuantity" promptText="0">
+                           <HBox.margin>
+                              <Insets left="10.0" />
+                           </HBox.margin>
+                        </TextField>
+                     </children>
+                  </HBox>
+                  <HBox prefHeight="90.0" prefWidth="328.0">
+                     <children>
+                        <Button fx:id="btnBuy" mnemonicParsing="false" prefHeight="39.0" prefWidth="239.0" styleClass="btn-success" stylesheets="@style.css" text="Buy" textFill="#fcfcfc">
+                           <font>
+                              <Font name="System Bold" size="18.0" />
+                           </font>
+                        </Button>
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+         </children>
+      </HBox>
+   </children>
+</AnchorPane>

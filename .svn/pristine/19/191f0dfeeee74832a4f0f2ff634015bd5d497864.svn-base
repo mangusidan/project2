@@ -1,0 +1,138 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package FoodMart;
+
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXComboBox;
+import dao.AdminSession;
+import dao.Order;
+import dao.OrderDAO;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.sql.SQLException;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.ObservableList;
+//import javafx.collections.transformation.FilteredList;
+//import javafx.collections.transformation.SortedList;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+
+/**
+ *
+ * @author Admin
+ */
+public class OrderController {
+
+    private final OrderDAO orderDao = new OrderDAO();
+
+    @FXML
+    private JFXButton admin;
+
+    @FXML
+    private JFXComboBox<String> cbStatus;
+
+    @FXML
+    private TableView<Order> tvOrders;
+
+    @FXML
+    private TableColumn<Order, Integer> tcOrderId;
+
+    @FXML
+    private TableColumn<Order, String> tcCustomer;
+
+    @FXML
+    private TableColumn<Order, String> tcStatus;
+
+    @FXML
+    private TableColumn<Order, Double> tcTotal;
+
+    @FXML
+    void gotoAdmin(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoAdminIndex();
+    }
+
+    @FXML
+    void gotoCategory(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoCategoryIndex();
+    }
+
+    @FXML
+    void gotoCustomer(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoCustomerIndex();
+    }
+
+    @FXML
+    void gotoProduct(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoProductIndex();
+    }
+
+    @FXML
+    void gotoOrder(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoOrderIndex();
+    }
+
+    @FXML
+    private TextField filterField;
+
+    @FXML
+    void logout(ActionEvent event) throws IOException {
+        AdminSession.getInstance().clearAdminSession();
+        Navigator.getInstance().gotoLogin();
+    }
+
+    @FXML
+    void refresh(ActionEvent event) {
+        buildTableviewData();
+    }
+
+    @FXML
+    void view(ActionEvent event) throws IOException, SQLException {
+        Order selectedOrder = tvOrders.getSelectionModel().getSelectedItem();
+        if (selectedOrder == null) {
+            selectWarning();
+        } else {
+            Navigator.getInstance().gotoOrderDetail(selectedOrder);
+        }
+    }
+
+    private void selectWarning() {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("WARNING");
+        alert.setHeaderText("Please select an order to perform this operation!");
+        alert.showAndWait();
+    }
+
+    private void buildTableviewData() {
+        ObservableList<Order> orders = orderDao.selectAll();
+        tvOrders.setItems(orders);
+        tcOrderId.setCellValueFactory((order) -> {
+            return order.getValue().getOrderIdProperty();
+        });
+        tcCustomer.setCellValueFactory((order) -> {
+            return order.getValue().getCustomerNameProperty();
+        });
+        tcTotal.setCellValueFactory((order) -> {
+            return new SimpleObjectProperty<>(order.getValue().getTotalPrice());
+        });
+        tcStatus.setCellValueFactory((order) -> {
+            return order.getValue().getStatusProperty();
+        });
+    }
+
+    @FXML
+    void search() {
+    }
+
+    public void initialize() throws SQLException {
+        buildTableviewData();
+        admin.setText(AdminSession.getInstance().getAdminName());
+    }
+}

@@ -1,0 +1,93 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package dao;
+
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+//import javafx.collections.ObservableList;
+
+/**
+ *
+ * @author Admin
+ */
+public class Order {
+
+    private ObjectProperty<Integer> orderId;
+    private ObjectProperty<Integer> customerId;
+    private StringProperty customerName;
+    private ObjectProperty<Double> totalPrice;
+    private StringProperty status;
+//    private ObservableList<OrderDetail> orderDetails;
+
+    public Order() {
+        this.orderId = new SimpleObjectProperty<>();
+        this.customerId = new SimpleObjectProperty<>();
+        this.customerName = new SimpleStringProperty();
+        this.status = new SimpleStringProperty();
+    }
+
+    public Integer getOrderId() {
+        return orderId.get();
+    }
+
+    public Integer getCustomerId() {
+        return customerId.get();
+    }
+
+    public String getCustomerName() {
+        return customerName.get();
+    }
+    
+    public Double getTotalPrice() {
+        return totalPrice.get();
+    }
+
+    public String getStatus() {
+        return status.get();
+    }
+
+    public void setOrderId(Integer orderId) {
+        this.orderId.set(orderId);
+    }
+    
+    public void setCustomerId(Integer customerId) {
+        this.customerId.set(customerId);
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName.set(customerName);
+    }
+    
+    public void setTotalPrice(Double totalPrice) {
+        this.totalPrice.set(totalPrice);
+    }
+
+    public void setStatus(String status) {
+        this.status.set(status);
+    }
+
+    public ObjectProperty<Integer> getOrderIdProperty() {
+        return orderId;
+    }
+
+    public ObjectProperty<Integer> getCustomerIdProperty() {
+        return customerId;
+    }
+
+    public StringProperty getCustomerNameProperty() {
+        return customerName;
+    }
+    
+    public ObjectProperty<Double> getTotalPriceProperty() {
+        return totalPrice;
+    }
+
+    public StringProperty getStatusProperty() {
+        return status;
+    }
+}

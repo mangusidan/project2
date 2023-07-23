@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIconView?>
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="720.0" prefWidth="1280.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="FoodMart.CartController">
+    <stylesheets>
+        <URL value="@style.css" />
+    </stylesheets>
+    <children>
+        <AnchorPane prefHeight="37.0" prefWidth="200.0" style="-fx-background-color: #6ac2ee;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <children>
+                <Label layoutX="108.0" layoutY="8.0" text="Welcome to L'sPlace!" textFill="WHITE">
+                    <font>
+                        <Font name="System Bold" size="15.0" />
+                    </font>
+                </Label>
+                <JFXButton layoutX="1186.0" layoutY="3.0" onAction="#logout" styleClass="hover-hand" text="Logout" textFill="WHITE" AnchorPane.rightAnchor="20.0">
+                    <font>
+                        <Font name="System Bold" size="15.0" />
+                    </font>
+                </JFXButton>
+            </children>
+        </AnchorPane>
+        <ImageView fitHeight="91.0" fitWidth="200.0" layoutY="40.0" pickOnBounds="true" preserveRatio="true" AnchorPane.leftAnchor="20.0">
+            <image>
+                <Image url="@../img/logo.png" />
+            </image>
+        </ImageView>
+        <HBox alignment="CENTER" layoutX="240.0" layoutY="37.0" prefHeight="90.0" prefWidth="1040.0" spacing="10.0" AnchorPane.rightAnchor="0.0">
+            <children>
+                <JFXButton onAction="#goToHome" styleClass="hover-hand" text="L'splace Home" textFill="#428bca">
+                    <font>
+                        <Font size="15.0" />
+                    </font>
+                </JFXButton>
+                <JFXButton text="About Us" textFill="#428bca">
+                    <font>
+                        <Font size="15.0" />
+                    </font>
+                </JFXButton>
+                <JFXButton text="Delivery" textFill="#428bca">
+                    <font>
+                        <Font size="15.0" />
+                    </font>
+                </JFXButton>
+                <JFXButton text="Store Locations" textFill="#428bca">
+                    <font>
+                        <Font size="15.0" />
+                    </font>
+                </JFXButton>
+                <JFXButton text="Terms &amp; Conditions" textFill="#428bca">
+                    <font>
+                        <Font size="15.0" />
+                    </font>
+                </JFXButton>
+                <JFXButton onAction="#goToMyAccount" styleClass="hover-hand" text="My Account" textFill="#428bca">
+                    <font>
+                        <Font size="15.0" />
+                    </font>
+                </JFXButton>
+                <JFXButton onAction="#gotoCart" styleClass="hover-hand" text="Cart" textFill="#428bca">
+                    <graphic>
+                        <MaterialDesignIconView fill="#7acff9" glyphName="CART" size="25" />
+                    </graphic>
+                    <font>
+                        <Font size="15.0" />
+                    </font>
+                </JFXButton>
+            </children>
+        </HBox>
+        <AnchorPane layoutX="252.0" layoutY="154.0" prefHeight="551.0" prefWidth="1028.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+         <children>
+             <ScrollPane fx:id="scrollPane" fitToWidth="true" hbarPolicy="NEVER" layoutX="27.0" prefWidth="1013.0" styleClass="background-white" AnchorPane.bottomAnchor="80.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <content>
+                  <GridPane fx:id="gpCartItems" alignment="CENTER" styleClass="background-white">
+                    <columnConstraints>
+                      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="40.0" />
+                      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                    </columnConstraints>
+                    <rowConstraints>
+                      <RowConstraints minHeight="10.0" prefHeight="50.0" vgrow="SOMETIMES" />
+                    </rowConstraints>
+                     <children>
+                        <HBox>
+                           <children>
+                              <Label text="Product">
+                                 <font>
+                                    <Font size="18.0" />
+                                 </font>
+                              </Label>
+                           </children>
+                        </HBox>
+                        <HBox GridPane.columnIndex="1">
+                           <children>
+                              <Label text="Quantity">
+                                 <font>
+                                    <Font size="18.0" />
+                                 </font>
+                              </Label>
+                           </children>
+                        </HBox>
+                        <HBox GridPane.columnIndex="2">
+                           <children>
+                              <Label text="Price">
+                                 <font>
+                                    <Font size="18.0" />
+                                 </font>
+                              </Label>
+                           </children>
+                        </HBox>
+                        <HBox GridPane.columnIndex="3">
+                           <children>
+                              <Label text="Total">
+                                 <font>
+                                    <Font size="18.0" />
+                                 </font>
+                              </Label>
+                           </children>
+                        </HBox>
+                     </children>
+                  </GridPane>
+               </content>
+               <padding>
+                  <Insets left="50.0" right="50.0" />
+               </padding>
+                </ScrollPane>
+            <HBox alignment="CENTER_RIGHT" layoutX="534.0" layoutY="480.0" spacing="20.0" AnchorPane.bottomAnchor="30.0" AnchorPane.rightAnchor="50.0">
+               <children>
+                  <JFXButton buttonType="RAISED" onAction="#shop" prefHeight="35.0" styleClass="btn-primary" text="Continue Shopping" textFill="WHITE">
+                     <font>
+                        <Font name="System Bold" size="14.0" />
+                     </font>
+                  </JFXButton>
+                  <JFXButton buttonType="RAISED" onAction="#checkout" prefHeight="35.0" styleClass="btn-primary" text="Confirm Order" textFill="WHITE">
+                     <font>
+                        <Font name="System Bold" size="14.0" />
+                     </font>
+                  </JFXButton>
+               </children>
+            </HBox>
+         </children>
+        </AnchorPane>
+        <Separator layoutX="27.0" layoutY="126.0" prefWidth="200.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="126.0" />
+    </children>
+</AnchorPane>

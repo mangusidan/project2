@@ -1,0 +1,136 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package FoodMart;
+
+import dao.CustomerSession;
+import dao.OrderDetail;
+import dao.OrderDetailDAO;
+import dao.Product;
+import dao.ProductDAO;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.text.DecimalFormat;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Label;
+import javafx.scene.control.Spinner;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+
+/**
+ *
+ * @author Admin
+ */
+public class CartController {
+
+    ProductDAO productDao = new ProductDAO();
+
+    OrderDetailDAO orderDetailDao = new OrderDetailDAO();
+
+    private ObservableList<OrderDetail> cart;
+
+    @FXML
+    private GridPane gpCartItems;
+
+    @FXML
+    void goToHome(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoHome();
+    }
+
+    @FXML
+    void goToMyAccount(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoMyAccount();
+    }
+
+    @FXML
+    void logout(ActionEvent event) throws IOException {
+        CustomerSession.getInstance().clearCustomerSession();
+        Navigator.getInstance().gotoLogin();
+    }
+
+    @FXML
+    void updateCart(ActionEvent event) {
+        for (int i = 0; i < cart.size(); i++) {
+            OrderDetail item = cart.get(i);
+            Spinner quantity = (Spinner) gpCartItems.lookup("#qty_" + Integer.toString(i + 1));
+            item.setQuantity((Integer) quantity.getValue());
+            if (item.getQuantity() == 0) {
+                cart.remove(i);
+            }
+        }
+        loadCart();
+    }
+
+    @FXML
+    void shop(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoHome();
+    }
+
+    @FXML
+    void checkout(ActionEvent event) throws IOException, SQLException {
+        Navigator.getInstance().gotoCheckout();
+    }
+
+    private void loadCart() {
+        gpCartItems.getChildren().removeIf(node -> GridPane.getRowIndex(node) != null && GridPane.getRowIndex(node) != 0);
+        Double totalPrice = 0.0;
+        int row = 1;
+        DecimalFormat df = new DecimalFormat("#,###");
+        for (OrderDetail item : cart) {
+            Product product = productDao.select(item.getProductId());
+            HBox col_1 = new HBox();
+            ImageView iv = new ImageView(product.getImage());
+            iv.setFitWidth(150);
+            iv.setFitHeight(150);
+            iv.setPreserveRatio(true);
+            iv.setSmooth(true);
+            iv.setCache(true);
+            Label name = new Label(product.getProductName());
+            col_1.getChildren().addAll(iv, name);
+            col_1.getStyleClass().add("col-1");
+            GridPane.setConstraints(col_1, 0, row);
+
+            HBox col_2 = new HBox();
+            Spinner quantity = new Spinner(0, product.getStock(), item.getQuantity());
+            quantity.setId("qty_" + row);
+            quantity.setUserData(item);
+            col_2.getChildren().add(quantity);
+            GridPane.setConstraints(col_2, 1, row);
+
+            HBox col_3 = new HBox();
+            Label price = new Label(df.format(item.getUnitPrice()) + " VND");
+            col_3.getChildren().add(price);
+            GridPane.setConstraints(col_3, 2, row);
+
+            HBox col_4 = new HBox();
+            Label total = new Label(df.format(item.getSubTotal()) + " VND");
+            col_4.getChildren().add(total);
+            GridPane.setConstraints(col_4, 3, row);
+
+            gpCartItems.getChildren().addAll(col_1, col_2, col_3, col_4);
+            totalPrice += item.getUnitPrice() * item.getQuantity();
+            row++;
+        }
+        HBox lastCell = new HBox();
+        Label subtotal = new Label("Subtotal: " + df.format(totalPrice) + " VND");
+        lastCell.getChildren().add(subtotal);
+        lastCell.setPrefHeight(50);
+        GridPane.setConstraints(lastCell, 3, row);
+        gpCartItems.getChildren().add(lastCell);
+
+        gpCartItems.getChildren().forEach(hbox -> {
+            hbox.getStyleClass().add("cart-cell");
+        });
+    }
+
+    public void initialize() throws SQLException {
+      cart = CustomerSession.getInstance().getCart();
+        loadCart();
+    }
+}

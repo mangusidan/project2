@@ -1,0 +1,268 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package FoodMart;
+
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.validation.RequiredFieldValidator;
+import dao.AdminSession;
+import dao.Status;
+import dao.StatusDAO;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.Optional;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.paint.Paint;
+
+/**
+ *
+ * @author Admin
+ */
+public class StatusController {
+
+    private final StatusDAO statusDao = new StatusDAO();
+    private ObservableList<Status> dataList = FXCollections.observableArrayList();
+    private Status editStatus = null;
+
+    private ChangeListener<String> nameListener;
+
+    @FXML
+    private JFXButton admin;
+
+    @FXML
+    private Label labelEditor;
+
+    @FXML
+    private Label noti;
+
+    @FXML
+    private JFXTextField txtStatus;
+
+    @FXML
+    private TextField filterField;
+
+    @FXML
+    private TableView<Status> tvStatus;
+
+    @FXML
+    private TableColumn<Status, Integer> tcStatusCode;
+
+    @FXML
+    private TableColumn<Status, String> tcStatusName;
+
+    @FXML
+    void gotoOrder(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoOrderIndex();
+    }
+
+    @FXML
+    void gotoAdmin(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoAdminIndex();
+    }
+
+    @FXML
+    void gotoCategory(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoCategoryIndex();
+    }
+
+    @FXML
+    void gotoCustomer(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoCustomerIndex();
+    }
+
+    @FXML
+    void gotoProduct(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoProductIndex();
+    }
+
+    @FXML
+    void gotoStatus(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoStatusIndex();
+    }
+
+    @FXML
+    void logout(ActionEvent event) throws IOException {
+        AdminSession.getInstance().clearAdminSession();
+        Navigator.getInstance().gotoLogin();
+    }
+
+    @FXML
+    void clear(ActionEvent event) {
+        clearFields();
+    }
+
+    @FXML
+    void refresh(ActionEvent event) {
+        refreshDataList();
+    }
+
+    @FXML
+    void createNew(ActionEvent event) {
+        labelEditor.setText("New Status Details");
+        noti.setText("");
+        editStatus = null;
+        clearFields();
+    }
+
+    @FXML
+    void edit(ActionEvent event) {
+        Status selectedStatus = tvStatus.getSelectionModel().getSelectedItem();
+        if (selectedStatus == null) {
+            selectWarning();
+        } else {
+            labelEditor.setText("Edit Status Details");
+            noti.setText("");
+            editStatus = selectedStatus;
+            txtStatus.setText(selectedStatus.getStatusName());
+        }
+    }
+
+    @FXML
+    void save(ActionEvent event) {
+        txtStatus.textProperty().removeListener(nameListener);
+        if (validate()) {
+            Status extracted = extract_status_from_fields();
+            if (editStatus == null && statusDao.isUnique(extracted.getStatusName())) {
+                extracted = statusDao.insert(extracted);
+                if (extracted != null) {
+                    noti.setText("New status added successfully.");
+                    noti.setTextFill(Paint.valueOf("green"));
+                    refreshDataList();
+                } else {
+                    noti.setText("Some errors occurred.");
+                    noti.setTextFill(Paint.valueOf("red"));
+                }
+                clearFields();
+            } else if (editStatus != null && (extracted.getStatusName().equals(editStatus.getStatusName()) || statusDao.isUnique(extracted.getStatusName()))) {
+                extracted.setStatusCode(editStatus.getStatusCode());
+                boolean result = statusDao.update(extracted);
+                if (result) {
+                    noti.setText("Status edited successfully.");
+                    noti.setTextFill(Paint.valueOf("green"));
+                    refreshDataList();
+                } else {
+                    noti.setText("Some errors occurred.");
+                    noti.setTextFill(Paint.valueOf("red"));
+                }
+                editStatus = null;
+                clearFields();
+                labelEditor.setText("New Status Details");
+            } else {
+                noti.setText("This status already existed.");
+                noti.setTextFill(Paint.valueOf("red"));
+            }
+        } else {
+            txtStatus.textProperty().addListener(nameListener);
+        }
+    }
+
+    @FXML
+    void delete(ActionEvent event) {
+        Status selectedStatus = tvStatus.getSelectionModel().getSelectedItem();
+        if (selectedStatus == null) {
+            selectWarning();
+        } else {
+            if (statusDao.isReferenced(selectedStatus.getStatusCode())) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error");
+                alert.setHeaderText("You cannot delete status that are already referenced.");
+                alert.showAndWait();
+            } else {
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                alert.setTitle("DELETE");
+                alert.setHeaderText("Are you sure you want to delete this status?");
+                Optional<ButtonType> confirmationResponse = alert.showAndWait();
+                if (confirmationResponse.get() == ButtonType.OK) {
+                    boolean result = statusDao.delete(selectedStatus);
+                    if (result) {
+                        dataList.remove(selectedStatus);
+                        tvStatus.setItems(dataList);
+                    }
+                }
+            }
+            labelEditor.setText("New Status Details");
+            editStatus = null;
+        }
+    }
+
+    private void refreshDataList() {
+        dataList = statusDao.selectAll();
+        tvStatus.setItems(dataList);
+    }
+
+    private boolean validate() {
+        RequiredFieldValidator required = new RequiredFieldValidator();
+        required.setMessage("Input Required");
+        txtStatus.getValidators().add(required);
+        txtStatus.validate();
+        return txtStatus.validate();
+    }
+
+    private Status extract_status_from_fields() {
+        Status s = new Status();
+        s.setStatusName(txtStatus.getText());
+        return s;
+    }
+
+    private void selectWarning() {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("WARNING");
+        alert.setHeaderText("Please select an status to perform this operation!");
+        alert.showAndWait();
+    }
+
+    private void clearFields() {
+        txtStatus.setText("");
+    }
+
+    @FXML
+    void search() {
+        FilteredList<Status> filteredData = new FilteredList<>(dataList, b -> true);
+        filterField.textProperty().addListener((observable, oldValue, newValue) -> {
+            filteredData.setPredicate((Status status) -> {
+                if (newValue == null || newValue.isEmpty()) {
+                    return true;
+                }
+                String lowerCaseFilter = newValue.toLowerCase();
+                return status.getStatusName().toLowerCase().contains(lowerCaseFilter);
+            });
+        });
+        SortedList<Status> sortedData = new SortedList<>(filteredData);
+        sortedData.comparatorProperty().bind(tvStatus.comparatorProperty());
+        tvStatus.setItems(sortedData);
+    }
+
+    public void initialize() throws SQLException {
+        admin.setText(AdminSession.getInstance().getEmail());
+        dataList = statusDao.selectAll();
+        tvStatus.setItems(dataList);
+        tcStatusName.setCellValueFactory((status) -> {
+            return status.getValue().getStatusNameProperty();
+        });
+        tcStatusCode.setCellValueFactory((status) -> {
+            return status.getValue().getStatusCodeProperty();
+        });
+
+        nameListener = (ObservableValue<? extends String> o, String oldVal, String newVal) -> {
+            if (newVal == null ? oldVal != null : !newVal.equals(oldVal)) {
+                txtStatus.validate();
+            }
+        };
+    }
+}

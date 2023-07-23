@@ -1,0 +1,234 @@
+-- --------------------------------------------------------
+-- Host:                         127.0.0.1
+-- Server version:               10.4.11-MariaDB - mariadb.org binary distribution
+-- Server OS:                    Win64
+-- HeidiSQL Version:             11.0.0.5919
+-- --------------------------------------------------------
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET NAMES utf8 */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+
+
+-- Dumping database structure for foodmart
+DROP DATABASE IF EXISTS `foodmart`;
+CREATE DATABASE IF NOT EXISTS `foodmart` /*!40100 DEFAULT CHARACTER SET utf8mb4 */;
+USE `foodmart`;
+
+-- Dumping structure for table foodmart.admin
+DROP TABLE IF EXISTS `admin`;
+CREATE TABLE IF NOT EXISTS `admin` (
+  `adminID` int(11) NOT NULL AUTO_INCREMENT,
+  `adminName` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  PRIMARY KEY (`adminID`)
+) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4;
+
+-- Dumping data for table foodmart.admin: ~3 rows (approximately)
+/*!40000 ALTER TABLE `admin` DISABLE KEYS */;
+INSERT INTO `admin` (`adminID`, `adminName`, `email`, `password_hash`) VALUES
+	(1, 'a', 'a', '356A192B7913B04C54574D18C28D46E6395428AB'),
+	(4, 'thuanh', 'thuanhh96@gmail.com', '356A192B7913B04C54574D18C28D46E6395428AB'),
+	(5, 'manh', 'manhngo@gmail.com', 'DA4B9237BACCCDF19C0760CAB7AEC4A8359010B0');
+/*!40000 ALTER TABLE `admin` ENABLE KEYS */;
+
+-- Dumping structure for table foodmart.category
+DROP TABLE IF EXISTS `category`;
+CREATE TABLE IF NOT EXISTS `category` (
+  `categoryID` int(11) NOT NULL AUTO_INCREMENT,
+  `categoryName` varchar(255) NOT NULL,
+  `parent` int(11) DEFAULT NULL,
+  PRIMARY KEY (`categoryID`),
+  KEY `parent` (`parent`),
+  CONSTRAINT `category_ibfk_1` FOREIGN KEY (`parent`) REFERENCES `category` (`categoryID`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=88 DEFAULT CHARSET=utf8mb4;
+
+-- Dumping data for table foodmart.category: ~23 rows (approximately)
+/*!40000 ALTER TABLE `category` DISABLE KEYS */;
+INSERT INTO `category` (`categoryID`, `categoryName`, `parent`) VALUES
+	(1, 'Fresh Food', NULL),
+	(2, 'Fresh Fruit', 1),
+	(3, 'Bakery', NULL),
+	(4, 'Coffee & Tea', NULL),
+	(5, 'Honey, Jam & Syrup', NULL),
+	(6, 'Dairy', NULL),
+	(7, 'Milk', 6),
+	(8, 'Cheese', 6),
+	(9, 'Cooking Cream & Whipping Cream', 6),
+	(10, 'Dried Grain & Beans', NULL),
+	(11, 'Dried Grain', 10),
+	(12, 'Beans', 10),
+	(13, 'Snacks', NULL),
+	(15, 'Beef Jerky', 13),
+	(16, 'Cheddar', 8),
+	(17, 'Blue Cheese', 8),
+	(18, 'Frozen & Refrigerated', NULL),
+	(19, 'Ice Cream', 18),
+	(20, 'Frozen Fish & Seafood', 18),
+	(21, 'Jambon Salami Sausage', 18),
+	(60, 'Coffee', 4),
+	(61, 'Tea', 4),
+	(63, 'Frozen Potatoes & Vegetables', 18),
+	(85, 'Honey', 5),
+	(86, 'Jam', 5),
+	(87, 'Syrup', 5);
+/*!40000 ALTER TABLE `category` ENABLE KEYS */;
+
+-- Dumping structure for table foodmart.customer
+DROP TABLE IF EXISTS `customer`;
+CREATE TABLE IF NOT EXISTS `customer` (
+  `customerID` int(11) NOT NULL AUTO_INCREMENT,
+  `fullName` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `address` varchar(255) NOT NULL DEFAULT '',
+  `phone` varchar(12) NOT NULL,
+  PRIMARY KEY (`customerID`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4;
+
+-- Dumping data for table foodmart.customer: ~8 rows (approximately)
+/*!40000 ALTER TABLE `customer` DISABLE KEYS */;
+INSERT INTO `customer` (`customerID`, `fullName`, `email`, `password_hash`, `address`, `phone`) VALUES
+	(2, 'Rachel Green', 'rachel@gmail.com', '17BA0791499DB908433B80F37C5FBC89B870084B', 'New York', '01234567891'),
+	(3, 'Monica Geller', 'monica@gmail.com', '356A192B7913B04C54574D18C28D46E6395428AB', 'New York', '0123456789'),
+	(4, 'Ross Geller', 'ross@gmail.com', 'DA4B9237BACCCDF19C0760CAB7AEC4A8359010B0', 'New York', '0123456789'),
+	(5, 'Chandler Bing', 'chandler@gmail.com', 'DA4B9237BACCCDF19C0760CAB7AEC4A8359010B0', 'New York', '0123456789'),
+	(6, 'Joey Tribbiani', 'joey@gmail.com', 'DA4B9237BACCCDF19C0760CAB7AEC4A8359010B0', 'New York', '0123456789'),
+	(7, 'Thu Anh', 'a', '356A192B7913B04C54574D18C28D46E6395428AB', 'Hanoi', '0123456789'),
+	(8, 'b', 'b', '356A192B7913B04C54574D18C28D46E6395428AB', '', '3');
+/*!40000 ALTER TABLE `customer` ENABLE KEYS */;
+
+-- Dumping structure for table foodmart.order
+DROP TABLE IF EXISTS `order`;
+CREATE TABLE IF NOT EXISTS `order` (
+  `orderId` int(11) NOT NULL AUTO_INCREMENT,
+  `customerId` int(11) NOT NULL,
+  `totalPrice` float NOT NULL DEFAULT 0,
+  `date` date NOT NULL,
+  `status` varchar(255) NOT NULL DEFAULT 'processing',
+  PRIMARY KEY (`orderId`),
+  KEY `customerId` (`customerId`),
+  CONSTRAINT `order_ibfk_1` FOREIGN KEY (`customerId`) REFERENCES `customer` (`customerID`)
+) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4;
+
+-- Dumping data for table foodmart.order: ~17 rows (approximately)
+/*!40000 ALTER TABLE `order` DISABLE KEYS */;
+INSERT INTO `order` (`orderId`, `customerId`, `totalPrice`, `date`, `status`) VALUES
+	(20, 7, 0, '2020-08-30', 'Pending'),
+	(21, 7, 0, '2020-08-30', 'Pending'),
+	(22, 7, 0, '2020-08-30', 'Pending'),
+	(23, 7, 0, '2020-08-30', 'Pending'),
+	(24, 7, 0, '2020-08-30', 'Pending'),
+	(25, 7, 0, '2020-08-30', 'Pending'),
+	(26, 2, 0, '2020-08-31', 'Pending'),
+	(27, 3, 0, '2020-08-31', 'Pending'),
+	(28, 7, 0, '2020-08-31', 'Pending'),
+	(29, 7, 0, '2020-08-31', 'Pending'),
+	(30, 7, 0, '2020-08-31', 'Pending');
+/*!40000 ALTER TABLE `order` ENABLE KEYS */;
+
+-- Dumping structure for table foodmart.orderdetail
+DROP TABLE IF EXISTS `orderdetail`;
+CREATE TABLE IF NOT EXISTS `orderdetail` (
+  `orderId` int(11) NOT NULL,
+  `productId` int(11) NOT NULL,
+  `quantity` int(11) NOT NULL,
+  `unitPrice` float NOT NULL DEFAULT 0,
+  PRIMARY KEY (`orderId`,`productId`),
+  KEY `productId` (`productId`),
+  CONSTRAINT `orderdetail_ibfk_1` FOREIGN KEY (`orderId`) REFERENCES `order` (`orderId`),
+  CONSTRAINT `orderdetail_ibfk_2` FOREIGN KEY (`productId`) REFERENCES `product` (`productID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Dumping data for table foodmart.orderdetail: ~11 rows (approximately)
+/*!40000 ALTER TABLE `orderdetail` DISABLE KEYS */;
+INSERT INTO `orderdetail` (`orderId`, `productId`, `quantity`, `unitPrice`) VALUES
+	(26, 23, 2, 280000),
+	(26, 40, 3, 90000),
+	(27, 60, 3, 105000),
+	(27, 61, 4, 84000),
+	(28, 23, 1, 280000),
+	(28, 27, 1, 195000),
+	(28, 40, 3, 90000),
+	(28, 45, 1, 65000),
+	(28, 59, 3, 380000),
+	(28, 60, 1, 105000),
+	(29, 27, 1, 195000),
+	(30, 40, 1, 90000);
+/*!40000 ALTER TABLE `orderdetail` ENABLE KEYS */;
+
+-- Dumping structure for table foodmart.product
+DROP TABLE IF EXISTS `product`;
+CREATE TABLE IF NOT EXISTS `product` (
+  `productID` int(11) NOT NULL AUTO_INCREMENT,
+  `productName` varchar(255) NOT NULL,
+  `price` float NOT NULL,
+  `stock` int(11) NOT NULL,
+  `description` varchar(255) NOT NULL,
+  `image` varchar(255) NOT NULL,
+  `categoryID` int(11) DEFAULT NULL,
+  PRIMARY KEY (`productID`),
+  KEY `categoryID` (`categoryID`),
+  CONSTRAINT `product_ibfk_1` FOREIGN KEY (`categoryID`) REFERENCES `category` (`categoryID`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=104 DEFAULT CHARSET=utf8mb4;
+
+-- Dumping data for table foodmart.product: ~47 rows (approximately)
+/*!40000 ALTER TABLE `product` DISABLE KEYS */;
+INSERT INTO `product` (`productID`, `productName`, `price`, `stock`, `description`, `image`, `categoryID`) VALUES
+	(23, 'Strawberry Cake And Ice Cream', 280000, 50, 'Made in Germany-600g', 'img/Strawberry Cake And Ice Cream.png', 19),
+	(27, 'Almare Crispy fish fillet filled with cheese', 195000, 40, 'Made in Germany - 400g', 'img/Almare Crispy fish fillet filled with cheese.png', 20),
+	(40, 'Highway Thịt Bắp Bò Đóng Hộp', 90000, 25, 'Made in Singapore- 340g', 'img/Highway Thịt Bắp Bò Đóng Hộp.png', 19),
+	(45, 'Jack Link’s Thịt Bò Khô Vị Tiêu', 65000, 100, 'Made in New Zealand-25gr', 'img/Jack Link’s Thịt Bò Khô Vị Tiêu.png', 15),
+	(52, 'Bahlsen ABC Bánh Qui Kiểu Nga', 35000, 70, 'Made in Germany - 100g', 'img/Bahlsen ABC Bánh Qui Kiểu Nga.jpg', 13),
+	(53, 'Rice Cracker', 26000, 40, 'Made in Thailand - 25g', 'img/Balance Bánh Gạo Hữu Cơ.png', 13),
+	(54, 'Soy Waffle', 80000, 40, 'Made in Japan - 16pcs', 'img/Bourbon Bánh Xốp Sữa Đậu Nành.jpg', 13),
+	(59, 'Andros Frozen Cherry Puree', 380000, 27, 'Made in Vietnam - 1kg', 'img/andros-frozen-cherry-puree.jpg', 2),
+	(60, 'Blueberries', 105000, 20, 'Made in Vietnam – 125gr', 'img/blueberries.png', 2),
+	(61, 'Firestone Cranberry', 84000, 18, 'Made in USA - 300g', 'img/firestone-franberry.png', 13),
+	(62, 'Rosemary Kitchen Multi-Grain Bread', 45000, 16, 'Vietnam 300gr', 'img/Rosemary Kitchen Multi-Grain Bread.png', 3),
+	(63, 'Germany Garlic Butter Baguette', 65000, 149, 'Germany 175g', 'img/Germany Garlic Butter Baguette.png', 3),
+	(64, 'Saint Honore White Bread Rolls', 15000, 17, 'Vietnam - 60gr x3', 'img/Saint Honore White Bread Rolls.png', 3),
+	(65, 'Dilmah Special Loose Leaf Green Tea', 150000, 20, 'Australia 125gr', 'img/Dilmah Special Loose Leaf Green Tea.png', 61),
+	(66, 'Elephant Bio Relax Chamomile', 120000, 20, 'Netherlands 20 bags', 'img/Elephant Bio Relax Chamomile.png', 61),
+	(67, 'Arborea Latte Semi-Skimmed Milk', 46000, 10, 'Italy - 1L', 'img/Arborea Latte Semi-Skimmed Milk.jpg', 7),
+	(68, 'Devondale Our Creamy One Full Cream Pure Milk', 68000, 20, 'Australia 2L', 'img/Devondale Our Creamy One Full Cream Pure Milk.jpg', 7),
+	(69, 'Lemnos Spreadable Ricotta', 155000, 20, 'Australia 250g', 'img/Lemnos Spreadable Ricotta.png', 8),
+	(70, 'President British Cheddar Mature', 130000, 20, 'UK 200gr', 'img/President British Cheddar Mature.png', 8),
+	(71, 'Lyttos Halloumi Grilled Cheese', 175000, 17, 'Germany 250gr', 'img/Lyttos Halloumi Grilled Cheese.png', 8),
+	(72, 'Gourmet Beluga Lentils', 145000, 20, 'Germany 500g', 'img/Gourmet Beluga Lentils.png', 12),
+	(73, 'GoodHemp Orginal Hemp Seed Heart', 220000, 18, 'United Kingdom 225g', 'img/GoodHemp Orginal Hemp Seed Heart.png', 11),
+	(74, 'Local Legends Original Beef Jerky', 120000, 20, 'Australia 75gr', 'img/Local Legends Original Beef Jerky.png', 15),
+	(75, 'Local Legends Biltong Beef Jerky', 110000, 20, 'Australia 60gr', 'img/Local Legends Biltong Beef Jerky.png', 15),
+	(79, 'Daim Cup Ice Cream', 105000, 19, 'Germany 185ml', 'img/Daim Cup Ice Cream.png', 19),
+	(80, 'Mucci Funky American Cookie Double Trouble Ice Cream', 205000, 20, 'Germany 500ml', 'img/Mucci Funky American Cookie Double Trouble Ice Cream.png', 19),
+	(81, 'Toblerone Ice Cream Cup', 105000, 20, 'Germany 185gr', 'img/Toblerone Ice Cream Cup.png', 19),
+	(82, 'Oreo Cup Ice Cream', 105000, 20, 'Germany 185ml', 'img/Oreo Cup Ice Cream.png', 19),
+	(83, 'Häagen-Dazs Ice Cream Bar', 115000, 20, 'France 80ml', 'img/Häagen-Dazs Ice Cream Bar.png', 19),
+	(84, 'Elmhurst Unsweetened Milked Oats', 260000, 20, 'USA 946ml', 'img/Elmhurst Unsweetened Milked Oats.png', 7),
+	(85, 'Elmhurst Milked Oats Vanilla', 98000, 17, 'USA 325ml', 'img/Elmhurst Milked Oats Vanilla.png', 7),
+	(86, 'Elmhurst Milked Oats Chocolate', 98000, 20, 'USA 325ml', 'img/Elmhurst Milked Oats Chocolate.png', 7),
+	(87, 'The Bridge Bio Almond Drink', 140000, 30, 'Italia 1L', 'img/The Bridge Bio Almond Drink.png', 7),
+	(88, 'Ahmad Jasmine Green Tea', 65000, 13, 'USA 100gr', 'img/Ahmad Jasmine Green Tea.png', 61),
+	(89, 'Ahmad Vanilla Tranquility Black Tea', 48000, 19, 'USA 20 bags', 'img/Ahmad Vanilla Tranquility Black Tea.png', 61),
+	(90, 'Ahmad Blueberry Brilliance Green Tea', 48000, 17, 'UK - 20bags x 2g', 'img/Ahmad Blueberry Brilliance Green Tea.jpg', 61),
+	(91, 'Gardens Ceylon Fruit Tea Selection 4', 220000, 20, 'Japan 100 bags', 'img/Gardens Ceylon Fruit Tea Selection 4.png', 61),
+	(92, 'Dm Bio Lavender & Verbena Tea', 110000, 20, 'Germany 40gr', 'img/Dm Bio Lavender & Verbena Tea.png', 61),
+	(93, 'Twinings Cinnamon Orange Tea', 160000, 20, 'UK 25 bags', 'img/Twinings Cinnamon Orange Tea.png', 61),
+	(94, 'Firestone Blackberry', 96000, 20, 'USA 300g', 'img/Firestone Blackberry.png', 2),
+	(95, 'Davidoff Prestige Espresso Capsules', 150000, 17, 'Germany 10pcs', 'img/Davidoff Prestige Espresso Capsules.png', 60),
+	(96, 'Mr. Viet Cappucino Instant Coffee', 109000, 20, 'Vietnam - 15 packs', 'img/Mr. Viet Cappucino Instant Coffee.jpg', 60),
+	(97, 'Nespresso Inspiration Genova Livanto', 194000, 22, 'Switzerland 10 cups', 'img/Nespresso Inspiration Genova Livanto.png', 60),
+	(98, 'Starbucks Nespresso Capsules', 260000, 20, 'Switzerland 10 capsules', 'img/Starbucks Nespresso Capsules.png', 60),
+	(99, 'Tchibo Exclusive Coffee', 142000, 34, 'Germany 100g', 'img/Tchibo Exclusive Coffee.png', 60),
+	(100, 'Lapetite Longan Blossom Honey', 92000, 20, 'Vietnam 240g', 'img/Lapetite Longan Blossom Honey.png', 85),
+	(101, 'Kirkland Wildflower Honey', 680000, 20, 'USA 2.27Kg', 'img/Kirkland Wildflower Honey.png', 85),
+	(102, 'Kirkland Syrup Organic Blue Agave', 265000, 237, 'USA 1.02Kg', 'img/Kirkland Syrup Organic Blue Agave.png', 87),
+	(103, 'Smucker’s Red Raspberry Preserves', 130000, 20, 'USA 340gr', 'img/Smucker’s Red Raspberry Preserves.png', 86);
+/*!40000 ALTER TABLE `product` ENABLE KEYS */;
+
+/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
+/*!40014 SET FOREIGN_KEY_CHECKS=IF(@OLD_FOREIGN_KEY_CHECKS IS NULL, 1, @OLD_FOREIGN_KEY_CHECKS) */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

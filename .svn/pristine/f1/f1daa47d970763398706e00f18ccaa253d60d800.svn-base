@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-private xmlns="http://www.netbeans.org/ns/project-private/1">
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="1">
+        <file>
+            <url>src/FoodMart/style.css</url>
+            <bookmark id="1">
+                <name/>
+                <line>98</line>
+                <key/>
+            </bookmark>
+        </file>
+    </editor-bookmarks>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/C:/thuanh_java/FoodMart/src/FoodMart/LoginController.java</file>
+            <file>file:/C:/thuanh_java/FoodMart/src/FoodMart/OrderController.java</file>
+            <file>file:/C:/thuanh_java/FoodMart/src/FoodMart/ProductController.java</file>
+            <file>file:/C:/thuanh_java/FoodMart/src/FoodMart/Products.fxml</file>
+            <file>file:/C:/thuanh_java/FoodMart/src/dao/OrderDAO.java</file>
+            <file>file:/C:/thuanh_java/FoodMart/src/FoodMart/Main.java</file>
+            <file>file:/C:/thuanh_java/FoodMart/src/FoodMart/ProductEditController.java</file>
+            <file>file:/C:/thuanh_java/FoodMart/src/FoodMart/Login.fxml</file>
+            <file>file:/C:/thuanh_java/FoodMart/src/dao/CustomerSession.java</file>
+            <file>file:/C:/thuanh_java/FoodMart/src/dao/ProductDAO.java</file>
+        </group>
+    </open-files>
+</project-private>

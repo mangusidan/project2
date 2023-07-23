@@ -1,0 +1,186 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package FoodMart;
+
+import com.jfoenix.controls.JFXButton;
+import dao.AdminSession;
+import dao.Customer;
+import dao.CustomerDAO;
+import java.io.IOException;
+import java.sql.SQLException;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.cell.PropertyValueFactory;
+
+/**
+ *
+ * @author Admin
+ */
+public class CustomerController {
+
+    private CustomerDAO customerDao = new CustomerDAO();
+    
+    @FXML
+    private JFXButton admin;
+
+    @FXML
+    private TableView<Customer> tvCustomers;
+
+//    @FXML
+//    private TableColumn<Customer, Integer> tcCustomerId;
+
+    @FXML
+    private TableColumn<Customer, String> tcFullName;
+
+    @FXML
+    private TableColumn<Customer, String> tcEmail;
+
+    @FXML
+    private TableColumn<Customer, String> tcPhone;
+
+    @FXML
+    private TableColumn<Customer, String> tcAddress;
+
+    @FXML
+    private TextField filterField;
+    
+    @FXML
+    void gotoOrder(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoOrderIndex();
+    }
+
+    @FXML
+    void gotoProduct(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoProductIndex();
+    }
+
+    @FXML
+    void gotoAdmin(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoAdminIndex();
+    }
+
+    @FXML
+    void gotoCategory(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoCategoryIndex();
+    }
+
+    @FXML
+    void gotoCustomer(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoCustomerIndex();
+    }
+    
+    @FXML
+    void logout(ActionEvent event) throws IOException {
+        AdminSession.getInstance().clearAdminSession();
+        Navigator.getInstance().gotoLogin();
+    }
+
+    @FXML
+    void delete(ActionEvent event) {
+
+    }
+
+    @FXML
+    void edit(ActionEvent event) {
+
+    }
+
+    @FXML
+    void createNew(ActionEvent event) {
+
+    }
+
+    @FXML
+    void refresh(ActionEvent event) {
+        buildTableviewData();
+    }
+
+    private void selectWarning() {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+//        alert.setTitle(Translator.getResource().getString("alert.warning.title"));
+        alert.setTitle("WARNING");
+//        alert.setHeaderText(Translator.getResource().getString("alert.warning.text"));
+        alert.setHeaderText("Please select a customer to perform this operation!");
+        alert.showAndWait();
+    }
+
+    private void buildTableviewData() {
+        ObservableList<Customer> customers;
+        customers = customerDao.selectAll();
+        tvCustomers.setItems(customers);
+//        tcCustomerId.setCellValueFactory((customer) -> {
+//            return customer.getValue().getCustomerIdProperty();
+//        });
+        tcFullName.setCellValueFactory((customer) -> {
+            return customer.getValue().getFullNameProperty();
+        });
+        tcEmail.setCellValueFactory((customer) -> {
+            return customer.getValue().getEmailProperty();
+        });
+        tcPhone.setCellValueFactory((customer) -> {
+            return customer.getValue().getPhoneProperty();
+        });
+        tcAddress.setCellValueFactory((customer) -> {
+            return customer.getValue().getAddressProperty();
+        });
+    }
+    private ObservableList<Customer> dataList = FXCollections.observableArrayList();
+
+    @FXML
+    void search() {
+//        tcCustomerId.setCellValueFactory(new PropertyValueFactory<Customer, Integer>("customerID"));
+        tcFullName.setCellValueFactory(new PropertyValueFactory<Customer, String>("fullName"));
+        tcEmail.setCellValueFactory(new PropertyValueFactory<Customer, String>("email"));
+        tcPhone.setCellValueFactory(new PropertyValueFactory<Customer, String>("phone"));
+        tcAddress.setCellValueFactory(new PropertyValueFactory<Customer, String>("address"));
+
+        dataList = customerDao.selectAll();
+        tvCustomers.setItems(dataList);
+
+        FilteredList<Customer> filteredData = new FilteredList<>(dataList, b -> true);
+        filterField.textProperty().addListener((observable, oldValue, newValue) -> {
+            filteredData.setPredicate(customer -> {
+
+                if (newValue == null || newValue.isEmpty()) {
+                    return true;
+                }
+                String lowerCaseFilter = newValue.toLowerCase();
+
+                if (String.valueOf(customer.getCustomerID()).indexOf(lowerCaseFilter)!=-1 ) {
+                    return true;
+                } else if (customer.getFullName().toLowerCase().indexOf(lowerCaseFilter) != -1) {
+                    return true;
+                } 
+                 else if (customer.getEmail().toLowerCase().indexOf(lowerCaseFilter) != -1) {
+                    return true;
+                } else if (customer.getAddress().toLowerCase().indexOf(lowerCaseFilter) != -1) {
+                    return true;
+                } else if (customer.getPhone().toLowerCase().indexOf(lowerCaseFilter) != -1) {
+                    return true;
+                } else {
+                    return false;
+                }
+
+            });
+        });
+        SortedList<Customer> sortedData = new SortedList<>(filteredData);
+        sortedData.comparatorProperty().bind(tvCustomers.comparatorProperty());
+        tvCustomers.setItems(sortedData);
+    }
+
+    public void initialize() throws SQLException {
+        buildTableviewData();
+        admin.setText(AdminSession.getInstance().getEmail());
+    }
+}

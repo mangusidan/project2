@@ -1,0 +1,342 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package FoodMart;
+
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXComboBox;
+import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.validation.RequiredFieldValidator;
+import dao.AdminSession;
+import dao.Customer;
+import dao.CustomerDAO;
+import dao.Order;
+import dao.OrderDAO;
+import dao.OrderDetail;
+import dao.OrderDetailDAO;
+import dao.Product;
+import dao.ProductDAO;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.sql.SQLException;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TitledPane;
+import javafx.scene.layout.GridPane;
+
+/**
+ *
+ * @author Admin
+ */
+public class OrderDetailController {
+
+    private final OrderDetailDAO orderDetailDao = new OrderDetailDAO();
+    private final OrderDAO orderDao = new OrderDAO();
+    private final CustomerDAO customerDao = new CustomerDAO();
+    private final ProductDAO productDao = new ProductDAO();
+    private Order order;
+    private OrderDetail editDetail = null;
+
+    @FXML
+    private Label txtOrderId;
+
+    @FXML
+    private JFXButton admin;
+
+    @FXML
+    private TableView<OrderDetail> tvDetails;
+
+    @FXML
+    private TableColumn<OrderDetail, String> tcProduct;
+
+    @FXML
+    private TableColumn<OrderDetail, Double> tcPrice;
+
+    @FXML
+    private TableColumn<OrderDetail, Integer> tcQuantity;
+
+    @FXML
+    private TableColumn<OrderDetail, Double> tcSubtotal;
+
+    @FXML
+    private Label txtTotalPrice;
+
+    @FXML
+    private TitledPane paneProduct;
+
+    @FXML
+    private Label txtProductName;
+
+    @FXML
+    private Label txtPrice;
+
+    @FXML
+    private Label txtStock;
+
+    @FXML
+    private Label txtDescription;
+
+    @FXML
+    private Label txtCategory;
+
+    @FXML
+    private Label txtCustomerName;
+
+    @FXML
+    private Label txtAddress;
+
+    @FXML
+    private Label txtEmail;
+
+    @FXML
+    private Label txtPhone;
+
+    @FXML
+    private Label txtDate;
+
+    @FXML
+    private JFXComboBox<String> cbStatus;
+
+    @FXML
+    private GridPane gpModify;
+
+    @FXML
+    private Label txtProduct;
+
+    @FXML
+    private JFXTextField txtUnitPrice;
+
+    @FXML
+    private JFXTextField txtQuantity;
+
+    @FXML
+    private Label txtSubtotal;
+
+    @FXML
+    void gotoAdmin(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoAdminIndex();
+    }
+
+    @FXML
+    void gotoCategory(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoCategoryIndex();
+    }
+
+    @FXML
+    void gotoCustomer(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoCustomerIndex();
+    }
+
+    @FXML
+    void gotoProduct(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoProductIndex();
+    }
+
+    @FXML
+    void gotoOrder(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoOrderIndex();
+    }
+
+    @FXML
+    void logout(ActionEvent event) throws IOException {
+        AdminSession.getInstance().clearAdminSession();
+        Navigator.getInstance().gotoLogin();
+    }
+
+    @FXML
+    void back(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoOrderIndex();
+    }
+
+    @FXML
+    void modify(ActionEvent event) {
+        OrderDetail selectedDetail = tvDetails.getSelectionModel().getSelectedItem();
+        if (selectedDetail == null) {
+            selectWarning();
+        } else {
+            gpModify.setDisable(false);
+            editDetail = selectedDetail;
+            txtProduct.setText(selectedDetail.getProductName());
+            txtUnitPrice.setText(Double.toString(selectedDetail.getUnitPrice()));
+            txtQuantity.setText(Integer.toString(selectedDetail.getQuantity()));
+            txtSubtotal.setText(Double.toString(selectedDetail.getSubTotal()));
+            txtUnitPrice.textProperty().addListener((obs, oldVal, newVal) -> {
+                calculateSubtotal();
+            });
+            txtQuantity.textProperty().addListener((obs, oldVal, newVal) -> {
+                calculateSubtotal();
+            });
+        }
+    }
+
+    @FXML
+    void clear(ActionEvent event) {
+        clearFields();
+    }
+
+    @FXML
+    void refresh(ActionEvent event) {
+        txtTotalPrice.setText(Double.toString(buildTableviewData()));
+    }
+
+    @FXML
+    void save(ActionEvent event) throws NoSuchAlgorithmException {
+        if (editDetail != null) {
+            if (validate()) {
+                editDetail.setUnitPrice(Double.parseDouble(txtUnitPrice.getText()));
+                editDetail.setQuantity(Integer.parseInt(txtQuantity.getText()));
+                boolean result = orderDetailDao.update(editDetail);
+                if (result) {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Notification");
+                    alert.setHeaderText("Order detail updated succesfully!");
+                    alert.showAndWait();
+                } else {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Error");
+                    alert.setHeaderText("Some error happened.");
+                    alert.showAndWait();
+                }
+                editDetail = null;
+                txtProduct.setText("");
+                clearFields();
+                gpModify.setDisable(true);
+            }
+        }
+    }
+
+    @FXML
+    void enableUpdateStatus(ActionEvent event) {
+        cbStatus.setDisable(false);
+    }
+
+    @FXML
+    void updateStatus(ActionEvent event) {
+        order.setStatus(cbStatus.getValue());
+        orderDao.update(order);
+        boolean result = orderDao.update(order);
+        if (!result) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText("Some error happened.");
+            alert.showAndWait();
+        }
+        cbStatus.setDisable(true);
+    }
+
+    private void calculateSubtotal() {
+        if (!txtUnitPrice.getText().equals("") && !txtQuantity.getText().equals("")) {
+            Double unitPrice = Double.parseDouble(txtUnitPrice.getText());
+            Integer quantity = Integer.parseInt(txtQuantity.getText());
+            txtSubtotal.setText(Double.toString(unitPrice * quantity));
+        }
+    }
+
+    private void selectWarning() {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("WARNING");
+        alert.setHeaderText("Please select an item to perform this operation!");
+        alert.showAndWait();
+    }
+
+    private boolean validate() {
+        RequiredFieldValidator required = new RequiredFieldValidator();
+        required.setMessage("Input Required");
+        txtUnitPrice.getValidators().add(required);
+        txtQuantity.getValidators().add(required);
+        ChangeListener<String> unitPriceListener = new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> o, String oldVal, String newVal) {
+                if (newVal == null ? oldVal != null : !newVal.equals(oldVal)) {
+                    txtUnitPrice.validate();
+                }
+            }
+        };
+        ChangeListener<String> quantityListener = new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> o, String oldVal, String newVal) {
+                if (newVal == null ? oldVal != null : !newVal.equals(oldVal)) {
+                    txtQuantity.validate();
+                }
+            }
+        };
+        txtUnitPrice.textProperty().addListener(unitPriceListener);
+        txtQuantity.textProperty().addListener(quantityListener);
+        if (txtUnitPrice.validate() == true && txtQuantity.validate() == true) {
+            txtUnitPrice.textProperty().removeListener(unitPriceListener);
+            txtQuantity.textProperty().removeListener(quantityListener);
+            return true;
+        }
+        return false;
+    }
+
+    private Double buildTableviewData() {
+        ObservableList<OrderDetail> orderDetails = orderDetailDao.selectAllbyOrderId(order.getOrderId());
+        tvDetails.setItems(orderDetails);
+        tcProduct.setCellValueFactory((detail) -> {
+            return detail.getValue().getProductNameProperty();
+        });
+        tcPrice.setCellValueFactory((detail) -> {
+            return detail.getValue().getUnitPriceProperty();
+        });
+        tcQuantity.setCellValueFactory((detail) -> {
+            return detail.getValue().getQuantityProperty();
+        });
+        tcSubtotal.setCellValueFactory((detail) -> {
+            return new SimpleObjectProperty<>(detail.getValue().getSubTotal());
+        });
+        Double totalPrice = 0.0;
+        for (OrderDetail d : orderDetails) {
+            totalPrice += d.getSubTotal();
+        }
+        return totalPrice;
+    }
+
+    private void clearFields() {
+        txtUnitPrice.setText("");
+        txtQuantity.setText("");
+        txtSubtotal.setText("");
+    }
+
+    public void initialize(Order order) throws SQLException {
+        this.order = order;
+        txtOrderId.setText(Integer.toString(order.getOrderId()));
+        txtTotalPrice.setText(Double.toString(buildTableviewData()));
+        Customer customer = customerDao.select(order.getCustomerId());
+        txtCustomerName.setText(customer.getFullName());
+        txtAddress.setText(customer.getAddress());
+        txtEmail.setText(customer.getEmail());
+        txtPhone.setText(customer.getPhone());
+        cbStatus.getItems().addAll("Pending", "Confirmed", "Canceled");
+        for (String s : cbStatus.getItems()) {
+            if (s.equals(order.getStatus())) {
+                cbStatus.setValue(s);
+                break;
+            }
+        }
+        admin.setText(AdminSession.getInstance().getAdminName());
+
+        tvDetails.getSelectionModel().selectedItemProperty().addListener((obs, old, newSelection) -> {
+            if (newSelection != null) {
+                Product product = productDao.select(newSelection.getProductId());
+                txtProductName.setText(product.getProductName());
+                txtPrice.setText(Double.toString(product.getPrice()));
+                txtStock.setText(Integer.toString(product.getStock()));
+                txtDescription.setText(product.getDescription());
+                txtCategory.setText(product.getCategoryName());
+                paneProduct.setDisable(false);
+                paneProduct.setExpanded(true);
+            }
+        });
+    }
+}

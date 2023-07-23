@@ -1,0 +1,133 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package dao;
+
+import dbconnection.DbFactory;
+import static dbconnection.DbType.MYSQL;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
+/**
+ *
+ * @author Admin
+ */
+public class OrderDAO implements DAO<Order> {
+
+    @Override
+    public ObservableList<Order> selectAll() {
+        ObservableList<Order> orders = FXCollections.observableArrayList();
+
+        try (
+                Connection conn = DbFactory.getConnection(MYSQL);
+                Statement stm = conn.createStatement();
+                ResultSet rs = stm.executeQuery("SELECT `order`.*, customer.fullName, `status`.statusName, SUM(orderdetail.quantity*orderdetail.unitPrice) as `sum` FROM `order` JOIN customer ON `order`.customerId = customer.customerID JOIN `status` ON `order`.`status` = `status`.`code` JOIN `orderdetail` ON `order`.orderId = orderdetail.orderId GROUP BY `order`.orderId");) {
+            while (rs.next()) {
+                Order o = new Order();
+                o.setOrderId(rs.getInt("orderId"));
+                o.setCustomerId(rs.getInt("customerId"));
+                o.setCustomerName(rs.getString("fullName"));
+                o.setDate(rs.getDate("date"));
+                o.setStatusCode(rs.getInt("status"));
+                o.setStatus(rs.getString("statusName"));
+                o.setTotal(rs.getDouble("sum"));
+                orders.add(o);
+            }
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+        return orders;
+    }
+
+    @Override
+    public Order insert(Order newOrder) {
+        String sql = "INSERT into `order` (customerId, date, status) VALUES (?, NOW(), ?)";
+        ResultSet key = null;
+        try (
+                Connection conn = DbFactory.getConnection(MYSQL);
+                PreparedStatement stmt
+                = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);) {
+
+            stmt.setInt(1, newOrder.getCustomerId());
+            stmt.setInt(2, newOrder.getStatusCode());
+            int rowInserted = stmt.executeUpdate();
+
+            if (rowInserted == 1) {
+                key = stmt.getGeneratedKeys();
+                key.next();
+                int newKey = key.getInt(1);
+                newOrder.setOrderId(newKey);
+                return newOrder;
+            } else {
+                System.err.println("No order inserted");
+                return null;
+            }
+
+        } catch (Exception e) {
+            System.err.println(e);
+            return null;
+        } finally {
+            try {
+                if (key != null) {
+                    key.close();
+                }
+            } catch (SQLException ex) {
+                System.out.println(ex.getMessage());
+            }
+        }
+    }
+
+    @Override
+    public boolean update(Order order) {
+        String sql = "UPDATE `order` SET `status` = ? WHERE orderId = ?";
+        try (
+                Connection conn = DbFactory.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);) {
+            stmt.setInt(1, order.getStatusCode());
+            stmt.setInt(2, order.getOrderId());
+
+            int updated_num_rows = stmt.executeUpdate();
+            if (updated_num_rows == 1) {
+                return true;
+            } else {
+                System.out.println("Some error happened.");
+                return false;
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean delete(Order order) {
+        String sql = "DELETE FROM `order` WHERE orderId = ?";
+        try (
+                Connection conn = DbFactory.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);) {
+            stmt.setInt(1, order.getOrderId());
+            int del_num_rows = stmt.executeUpdate();
+            if (del_num_rows == 1) {
+                return true;
+            } else {
+                System.out.println("Some error happened.");
+                return false;
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public Order select(Integer i) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+}

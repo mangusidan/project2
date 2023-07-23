@@ -1,0 +1,82 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package FoodMart;
+
+import dao.CustomerSession;
+import dao.OrderDetail;
+import dao.Product;
+import java.text.DecimalFormat;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.control.Label;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.SpinnerValueFactory.IntegerSpinnerValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+
+/**
+ *
+ * @author DELL
+ */
+public class DetailController {
+
+    private Product product;
+
+    @FXML
+    private Label txtProductName;
+
+    @FXML
+    private ImageView imgProduct;
+
+    @FXML
+    private Label txtPrice;
+
+    @FXML
+    private Label txtStock;
+
+    @FXML
+    private Label txtDescription;
+
+    @FXML
+    private Label noti;
+
+    @FXML
+    private Spinner<Integer> qty;
+
+    @FXML
+    void addtoCart(ActionEvent event) {
+        if (qty.getValue() > product.getStock()) {
+            noti.setText("Quantity must be less than " + product.getStock());
+        } else {
+            OrderDetail newItem = new OrderDetail();
+            newItem.setProductId(product.getProductId());
+            newItem.setProductName(product.getProductName());
+            newItem.setQuantity(qty.getValue());
+            newItem.setUnitPrice(product.getPrice());
+            CustomerSession.getInstance().getCart().add(newItem);
+            noti.setText("Added to cart.");
+        }
+    }
+
+    public void initialize(Product product) {
+        this.product = product;
+        txtProductName.setText(product.getProductName());
+
+        DecimalFormat df = new DecimalFormat("#,###");
+        txtPrice.setText(df.format(product.getPrice()) + " VND");
+
+        txtStock.setText(product.getStock() + " in stock");
+
+        txtDescription.setText(product.getDescription());
+        txtDescription.setWrapText(true);
+
+        Image img = new Image(product.getImage());
+        imgProduct.setImage(img);
+
+        qty.setValueFactory(new IntegerSpinnerValueFactory(1, product.getStock(), 1));
+    }
+
+}

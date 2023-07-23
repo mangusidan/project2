@@ -1,0 +1,196 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package FoodMart;
+
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXDrawer;
+import com.jfoenix.controls.JFXTextField;
+import dao.Category;
+import dao.CategoryDAO;
+import dao.Product;
+import dao.ProductDAO;
+import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.text.DecimalFormat;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.Event;
+import javafx.event.EventHandler;
+import javafx.fxml.FXML;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
+
+/**
+ *
+ * @author Admin
+ */
+public class HomeController {
+
+    ProductDAO productDao = new ProductDAO();
+    CategoryDAO categoryDao = new CategoryDAO();
+    private ObservableList<Product> allProducts = Navigator.getInstance().getProducts();
+
+    @FXML
+    private JFXDrawer drawer;
+
+    @FXML
+    private JFXButton hbg;
+
+    @FXML
+    private HBox hbgWrapper;
+
+    @FXML
+    private ScrollPane scrollPane;
+
+    @FXML
+    private JFXTextField txtSearch;
+
+    @FXML
+    void logout(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoLogin();
+    }
+
+    @FXML
+    void gotoHome(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoHome();
+    }
+
+    @FXML
+    void gotoMyAccount(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoMyAccount();
+    }
+
+    @FXML
+    void hbgClick(ActionEvent event) {
+        if (drawer.isClosed()) {
+            drawer.open();
+            drawer.toFront();
+            hbg.setTranslateX(drawer.getWidth());
+        } else {
+            drawer.close();
+            drawer.toBack();
+            hbg.setTranslateX(0);
+        }
+    }
+
+    @FXML
+    void search(ActionEvent event) throws IOException, SQLException {
+        if (!txtSearch.getText().equals("")) {
+            Navigator.getInstance().gotoSearch(txtSearch.getText());
+        }
+    }
+    EventHandler clickProduct = (EventHandler) (Event e) -> {
+        try {
+            Node clickedProduct = (Node) e.getSource();
+            Integer productID = (Integer) clickedProduct.getUserData();
+            Product product = productDao.select(productID);
+            PUP.getInstance().gotoDetail(null);
+            PUP.getInstance().getStage().show();
+        } catch (IOException ex) {
+            Logger.getLogger(HomeController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    };
+
+private void showProducts(ObservableList<Product> products) {
+        scrollPane.setContent(null);
+        int col = 0, row = 0;
+        GridPane gpProductsList = new GridPane();
+        gpProductsList.getStyleClass().addAll("background-white", "gpProductsList");
+        scrollPane.setContent(gpProductsList);
+
+        for (int i = 0; i < 5; i++) {
+            gpProductsList.getColumnConstraints().add(i, new ColumnConstraints());
+        }
+        gpProductsList.getColumnConstraints().forEach(column -> {
+            column.setHgrow(Priority.ALWAYS);
+        });
+
+        for (Product p : products) {
+            VBox vbox = new VBox(p.getProductId());
+            vbox.setId(p.getProductId().toString());
+            VBox imageWrapper = new VBox();
+            ImageView iv = new ImageView(p.getImage());
+            iv.setFitWidth(200);
+            iv.setFitHeight(200);
+            iv.setPreserveRatio(true);
+            iv.setSmooth(true);
+            iv.setCache(true);
+            iv.getStyleClass().addAll("imageView", "hover-hand");
+            iv.setUserData(p.getProductId());
+            iv.setOnMouseClicked(clickProduct);
+            imageWrapper.getChildren().add(iv);
+            imageWrapper.setPrefHeight(250);
+            imageWrapper.setAlignment(Pos.CENTER_LEFT);
+            VBox detail = new VBox();
+            Label name = new Label(p.getProductName());
+            name.setMaxWidth(200);
+            name.getStyleClass().addAll("productName", "hover-hand");
+            name.setUserData(p.getProductId());
+            name.setOnMouseClicked(clickProduct);
+            DecimalFormat df = new DecimalFormat("#,###");
+            Label price = new Label(df.format(p.getPriceProperty().get()) + " VND");
+            price.getStyleClass().add("price");
+            detail.getChildren().addAll(name, price);
+            detail.setSpacing(5);
+            vbox.getChildren().addAll(imageWrapper, detail);
+            GridPane.setConstraints(vbox, col, row);
+            gpProductsList.getChildren().add(vbox);
+            col++;
+            if (col == 5) {
+                row++;
+                col = 0;
+            }
+        }
+    }
+
+    public void initialize() throws SQLException {
+        VBox sideNav = new VBox();
+        Label lbCategory = new Label("All categories", new FontAwesomeIconView());
+        lbCategory.setStyle("-fx-background-color: #6ac2ee;-fx-font-size:17;-fx-text-fill:white");
+        lbCategory.setPrefHeight(37);
+        sideNav.getChildren().add(lbCategory);
+        lbCategory.prefWidthProperty().bind(sideNav.widthProperty());
+        ObservableList<Category> categories = categoryDao.selectAll();
+        for (Category category : categories) {
+            JFXButton btnCategory = new JFXButton(category.getCategoryName());
+            btnCategory.getStyleClass().addAll("hover-hand", "categoryName");
+            btnCategory.setUserData(category);
+            btnCategory.setOnAction(e -> {
+                JFXButton clickedCategory = (JFXButton) e.getSource();
+                Category c = (Category) clickedCategory.getUserData();
+                try {
+                    Navigator.getInstance().gotoBrowse(c);
+                } catch (IOException ex) {
+                    System.err.println(ex.getMessage());
+                
+
+} catch (SQLException ex) {
+                    Logger.getLogger(HomeController.class
+.getName()).log(Level.SEVERE, null, ex);
+                }
+            });
+            btnCategory.setAlignment(Pos.CENTER_LEFT);
+            sideNav.getChildren().add(btnCategory);
+            btnCategory.prefWidthProperty().bind(sideNav.widthProperty());
+        }
+
+        drawer.setSidePane(sideNav);
+        drawer.toBack();
+
+        showProducts(allProducts);
+    }
+}

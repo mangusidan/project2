@@ -1,0 +1,64 @@
+/*
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+*/
+/* 
+    Created on : Aug 11, 2020, 7:15:46 PM
+    Author     : Admin
+*/
+
+.background-white {
+    -fx-background-color: white;
+}
+
+.sidebar {
+    -fx-background-color: #16313e;
+}
+
+.btn-danger {
+    -fx-background-color: #c13d36;
+}
+.btn-success {
+    -fx-background-color: #1DB954;
+}
+.btn-primary {
+    -fx-background-color: lightskyblue;
+}
+.btn-info {
+    -fx-background-color:  #1a7499;
+}
+.hover-hand {
+    -fx-cursor: hand;
+}
+.productName {
+    -fx-font-size: 17;
+    -fx-text-fill:#5d5d5d;
+}
+.productName:hover,.categoryName:hover {
+    -fx-text-fill:#6ac2ee;
+    -fx-font-weight: 400;
+}
+.price {
+    -fx-font-size: 15;
+    -fx-text-fill:#3b71b8;
+}
+.gpProductsList{
+    -fx-vgap: 30;
+    -fx-hgap: 10;
+}
+.categoryName{
+    -fx-font-size: 15;
+}
+.hover-shadow:hover{
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 5, 0,0,0);
+}
+.cart-cell {
+    -fx-alignment: CENTER;
+    -fx-border-color: #eee;
+    -fx-font-size: 15;
+}
+.col-1{
+    -fx-alignment: CENTER_LEFT;
+    -fx-spacing: 10;
+}

@@ -1,0 +1,360 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package FoodMart;
+
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXComboBox;
+import com.jfoenix.controls.JFXTextField;
+import dao.Category;
+import dao.CategoryDAO;
+import dao.CustomerSession;
+import dao.OrderDetail;
+import dao.Product;
+import dao.ProductDAO;
+import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
+import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.text.DecimalFormat;
+import java.util.Comparator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.animation.FadeTransition;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.Event;
+import javafx.event.EventHandler;
+import javafx.fxml.FXML;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Paint;
+import javafx.stage.Stage;
+import javafx.util.Duration;
+import org.controlsfx.control.RangeSlider;
+
+/**
+ *
+ * @author Admin
+ */
+public class SearchController {
+
+    private ProductDAO productDao = new ProductDAO();
+    private CategoryDAO categoryDao = new CategoryDAO();
+    private final ObservableList<Product> allProducts = CustomerSession.getInstance().getProducts();
+    private ObservableList<Product> products = FXCollections.observableArrayList();
+    private ObservableList<Product> filteredProducts = FXCollections.observableArrayList();
+    private static Stage popup = new Stage();
+
+    static {
+        Popup.getInstance().setStage(popup);
+    }
+
+    @FXML
+    private JFXButton btnCart;
+
+    @FXML
+    private JFXComboBox<Category> cbCategories;
+
+    @FXML
+    private VBox sliderPrice;
+
+    @FXML
+    private JFXComboBox<String> sortBy;
+
+    @FXML
+    private ScrollPane scrollPane;
+
+    @FXML
+    private JFXTextField txtSearch;
+
+    @FXML
+    private JFXTextField fromVal;
+
+    @FXML
+    private JFXTextField toVal;
+
+    private RangeSlider priceRange;
+
+    @FXML
+    void logout(ActionEvent event) throws IOException {
+        CustomerSession.getInstance().clearCustomerSession();
+        Navigator.getInstance().gotoLogin();
+    }
+
+    @FXML
+    void goToHome(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoHome();
+    }
+
+    @FXML
+    void gotoCart(ActionEvent event) throws IOException, SQLException {
+        Navigator.getInstance().gotoCart();
+    }
+
+    @FXML
+    void gotoMyAccount(ActionEvent event) throws IOException, SQLException {
+        Navigator.getInstance().gotoMyAccount();
+    }
+
+    @FXML
+    void chooseCategory(ActionEvent event) throws IOException, SQLException {
+        Navigator.getInstance().gotoBrowse(cbCategories.getValue());
+    }
+
+    @FXML
+    void search(ActionEvent event) throws IOException, SQLException {
+        if (!txtSearch.getText().equals("")) {
+            products.clear();
+            filteredProducts.clear();
+            allProducts.stream().filter(p -> {
+                return (p.getProductName().toLowerCase().contains(txtSearch.getText().toLowerCase()));
+            }).forEach(p -> {
+                products.add(p);
+            });
+            buildPriceRange();
+            showProducts(products);
+        }
+    }
+
+    @FXML
+    void enter(KeyEvent event) throws IOException, SQLException {
+        if (event.getCode() == KeyCode.ENTER) {
+            if (!txtSearch.getText().equals("")) {
+                products.clear();
+                filteredProducts.clear();
+                allProducts.stream().filter(p -> {
+                    return (p.getProductName().toLowerCase().contains(txtSearch.getText().toLowerCase()));
+                }).forEach(p -> {
+                    products.add(p);
+                });
+                buildPriceRange();
+                showProducts(products);
+            }
+        }
+    }
+
+    @FXML
+    void changeOrder(ActionEvent event) {
+        if (filteredProducts.size() != 0) {
+            showProducts(filteredProducts);
+        } else {
+            showProducts(products);
+        }
+    }
+
+    @FXML
+    void applyFilter(ActionEvent event) {
+        filteredProducts.clear();
+        products.stream().filter(p -> {
+            return (p.getPrice() <= priceRange.getHighValue() && p.getPrice() >= priceRange.getLowValue());
+        }).forEach(p -> {
+            filteredProducts.add(p);
+        });
+        showProducts(filteredProducts);
+    }
+
+    EventHandler clickProduct = (EventHandler) (Event e) -> {
+        try {
+            Node clickedProduct = (Node) e.getSource();
+            Integer productID = (Integer) clickedProduct.getUserData();
+            Product product = productDao.select(productID);
+            Popup.getInstance().gotoDetail(product);
+            Popup.getInstance().getStage().show();
+        } catch (IOException ex) {
+            Logger.getLogger(HomeController.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SQLException ex) {
+            Logger.getLogger(HomeController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    };
+
+    private ObservableList<Product> sort(ObservableList<Product> products) {
+        ObservableList<Product> sortedProducts = FXCollections.observableArrayList();
+        String sortVal = sortBy.getValue();
+        switch (sortVal) {
+            case "A-Z":
+                products.stream().sorted(Comparator.comparing(Product::getProductName)).forEach(p -> {
+                    sortedProducts.add(p);
+                });
+                break;
+            case "Sort by newest":
+                products.stream().sorted(Comparator.comparing(Product::getProductId)).forEach(p -> {
+                    sortedProducts.add(p);
+                });
+                break;
+            case "Sort by price: low to high":
+                products.stream().sorted(Comparator.comparing(Product::getPrice)).forEach(p -> {
+                    sortedProducts.add(p);
+                });
+                break;
+            case "Sort by price: high to low":
+                products.stream().sorted(Comparator.comparing(Product::getPrice, (p1, p2) -> {
+                    return p2.compareTo(p1);
+                })).forEach(p -> {
+                    sortedProducts.add(p);
+                });
+                break;
+            default:
+                break;
+        }
+        return sortedProducts;
+    }
+
+    private void showProducts(ObservableList<Product> products) {
+        ObservableList<Product> sortedProducts = sort(products);
+        scrollPane.setContent(null);
+        int col = 0, row = 0;
+        GridPane gpProductsList = new GridPane();
+        gpProductsList.getStyleClass().addAll("background-white", "gpProductsList");
+        scrollPane.setContent(gpProductsList);
+        scrollPane.getStyleClass().add("background-white");
+
+        for (int i = 0; i < 3; i++) {
+            gpProductsList.getColumnConstraints().add(i, new ColumnConstraints());
+        }
+
+        gpProductsList.getColumnConstraints().forEach(column -> {
+            column.setHgrow(Priority.ALWAYS);
+        });
+
+        for (Product p : sortedProducts) {
+            VBox vbox = new VBox();
+            vbox.setPadding(new Insets(0, 0, 0, 10));
+            VBox imageWrapper = new VBox();
+            Label category = new Label(p.getCategoryName());
+            category.getStyleClass().addAll("hover-hand", "categoryName");
+            category.setUserData(p.getCategoryId());
+            ImageView iv = new ImageView(p.getImage());
+            iv.setFitWidth(250);
+            iv.setFitHeight(250);
+            iv.setPreserveRatio(true);
+            iv.setSmooth(true);
+            iv.setCache(true);
+            iv.getStyleClass().addAll("hover-shadow", "hover-hand");
+            iv.setUserData(p.getProductId());
+            iv.setOnMouseClicked(clickProduct);
+            imageWrapper.getChildren().add(iv);
+            imageWrapper.setPrefHeight(250);
+            imageWrapper.setAlignment(Pos.CENTER_LEFT);
+            VBox detail = new VBox();
+            Label name = new Label(p.getProductName());
+            name.getStyleClass().addAll("productName", "hover-hand");
+            name.setMaxWidth(250);
+            name.setUserData(p.getProductId());
+            name.setOnMouseClicked(clickProduct);
+            DecimalFormat df = new DecimalFormat("#,###");
+            Label price = new Label(df.format(p.getPriceProperty().get()) + " VND");
+            price.getStyleClass().add("price");
+            JFXButton addToCart = new JFXButton("Add to Cart");
+            HBox action = new HBox();
+            FontAwesomeIconView check = new FontAwesomeIconView(FontAwesomeIcon.CHECK);
+            check.setSize("25");
+            check.setFill(Paint.valueOf("white"));
+            FadeTransition fade = new FadeTransition(Duration.seconds(1), check);
+            fade.setFromValue(1);
+            fade.setToValue(0);
+            fade.setOnFinished(e -> {
+                check.setFill(Paint.valueOf("white"));
+            });
+            for (OrderDetail item : CustomerSession.getInstance().getCart()) {
+                if (item.getProductName().equals(p.getProductName())) {
+                    FontAwesomeIconView c = new FontAwesomeIconView(FontAwesomeIcon.CHECK);
+                    c.setSize("15");
+                    c.setFill(Paint.valueOf("white"));
+                    addToCart.setGraphic(c);
+                }
+            }
+            addToCart.getStyleClass().addAll("btn-primary", "hover-shadow", "hover-hand", "txt-white", "txt-bold");
+            addToCart.setOnAction((event) -> {
+                boolean existed = false;
+                for (OrderDetail item : CustomerSession.getInstance().getCart()) {
+                    if (item.getProductName().equals(p.getProductName())) {
+                        item.setQuantity(item.getQuantity() + 1);
+                        existed = true;
+                        break;
+                    }
+                }
+                if (!existed) {
+                    OrderDetail newItem = new OrderDetail();
+                    newItem.setProductId(p.getProductId());
+                    newItem.setProductName(p.getProductName());
+                    newItem.setQuantity(1);
+                    newItem.setUnitPrice(p.getPrice());
+                    CustomerSession.getInstance().getCart().add(newItem);
+                    FontAwesomeIconView c = new FontAwesomeIconView(FontAwesomeIcon.CHECK);
+                    c.setSize("15");
+                    c.setFill(Paint.valueOf("white"));
+                    addToCart.setGraphic(c);
+                    btnCart.setText("Cart (" + CustomerSession.getInstance().getCart().size() + ")");
+                }
+                check.setFill(Paint.valueOf("green"));
+                fade.play();
+            });
+            action.getChildren().addAll(addToCart, check);
+            action.setSpacing(20);
+            detail.getChildren().addAll(name, price, action);
+            detail.setSpacing(5);
+            vbox.getChildren().addAll(category, imageWrapper, detail);
+            vbox.setSpacing(20);
+            GridPane.setConstraints(vbox, col, row);
+            gpProductsList.getChildren().add(vbox);
+            col++;
+            if (col == 3) {
+                row++;
+                col = 0;
+            }
+        }
+    }
+
+    private void buildPriceRange() {
+        if (sliderPrice.getChildren().contains(priceRange)) {
+            sliderPrice.getChildren().remove(priceRange);
+        }
+        if (products.stream().min(Comparator.comparing(Product::getPrice)).isPresent() && products.stream().max(Comparator.comparing(Product::getPrice)).isPresent()) {
+            Double minPrice = products.stream().min(Comparator.comparing(Product::getPrice)).get().getPrice();
+            Double maxPrice = products.stream().max(Comparator.comparing(Product::getPrice)).get().getPrice();
+            priceRange = new RangeSlider(minPrice, maxPrice, minPrice, maxPrice);
+            sliderPrice.getChildren().add(priceRange);
+            fromVal.setText(minPrice + " VND");
+            toVal.setText(maxPrice + " VND");
+            DecimalFormat df = new DecimalFormat("#,###");
+            priceRange.lowValueProperty().addListener((obs, olV, newV) -> {
+                fromVal.setText(df.format((Double) newV) + " VND");
+            });
+            priceRange.highValueProperty().addListener((obs, olV, newV) -> {
+                toVal.setText(df.format((Double) newV) + " VND");
+            });
+        };
+    }
+
+    public void initialize(String search) throws SQLException {
+        allProducts.stream().filter(p -> {
+            return (p.getProductName().toLowerCase().contains(search.toLowerCase()));
+        }).forEach(p -> {
+            products.add(p);
+        });
+
+        cbCategories.getItems().addAll(categoryDao.selectAll());
+
+        buildPriceRange();
+
+        sortBy.getItems().addAll("A-Z", "Sort by newest", "Sort by price: low to high", "Sort by price: high to low");
+        sortBy.setValue("A-Z");
+        showProducts(products);
+        btnCart.setText("Cart (" + CustomerSession.getInstance().getCart().size() + ")");
+    }
+}

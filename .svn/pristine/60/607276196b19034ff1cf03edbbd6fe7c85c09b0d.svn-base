@@ -1,0 +1,91 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package FoodMart;
+
+import dao.Product;
+import java.io.IOException;
+import java.util.Optional;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+
+/**
+ *
+ * @author DELL
+ */
+public class DetailController {
+
+    @FXML
+    private Label lbProductName;
+
+    @FXML
+    private ImageView imgProduct;
+
+    @FXML
+    private Label lbPrice;
+
+    @FXML
+    private Label lbStock;
+
+    @FXML
+    private Label lbDescription;
+
+    @FXML
+    private TextField txtQuantity;
+
+    @FXML
+    private Button btnBuy;
+
+//    @FXML
+//    void gotoOrders(ActionEvent event) throws IOException {
+//        Navigator.getInstance().gotoOrder();
+//    }
+
+    private void btnBuy(ActionEvent event) {
+        Alert alert = new Alert(AlertType.CONFIRMATION);
+        alert.setTitle("Buy Product");
+        alert.setHeaderText("");
+        alert.setContentText("Do you want to buy it?");
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.get() == ButtonType.OK) {
+            System.out.println("OK");
+        } else {
+            System.out.println("Cancel");
+        }
+        
+    }
+
+    private Product product = new Product();
+
+    public void initialize(Product p) {
+        product = p;
+        lbProductName.setText(p.getProductName());
+        lbProductName.setStyle("-fx-font-size: 30px; -fx-text-fill: blue");
+
+        lbPrice.setText(p.getPrice() + " VND");
+        lbPrice.setStyle("-fx-font-size: 20px; -fx-text-fill: black");
+
+        lbStock.setText(p.getStock() + "");
+        lbStock.setStyle("-fx-font-size: 20px; -fx-text-fill: black");
+
+        lbDescription.setText("Description: " + p.getDescription());
+        lbDescription.setStyle("-fx-font-size: 20px; -fx-text-fill: black; Long text label, wrap it!, using setWrapText(true)");
+        lbDescription.setMaxWidth(600);
+        lbDescription.setWrapText(true);
+
+        Image img = new Image(p.getImage(), 600, 300, true, true);
+        imgProduct.setImage(img);
+    }
+
+}

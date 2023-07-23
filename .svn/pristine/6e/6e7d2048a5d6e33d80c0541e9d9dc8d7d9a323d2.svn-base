@@ -1,0 +1,337 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package FoodMart;
+
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXDrawer;
+import dao.Category;
+import dao.CategoryDAO;
+import dao.Product;
+import dao.ProductDAO;
+import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.text.DecimalFormat;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.controls.JFXTreeView;
+import dao.CustomerSession;
+import dao.OrderDetail;
+import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
+import java.util.Comparator;
+import javafx.animation.FadeTransition;
+import javafx.collections.FXCollections;
+import javafx.event.Event;
+import javafx.event.EventHandler;
+import javafx.geometry.Insets;
+import javafx.scene.Node;
+import javafx.scene.control.TreeItem;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.paint.Paint;
+import javafx.util.Duration;
+
+/**
+ *
+ * @author Admin
+ */
+public class HomeController {
+
+    ProductDAO productDao = new ProductDAO();
+    CategoryDAO categoryDao = new CategoryDAO();
+    private ObservableList<Product> allProducts = CustomerSession.getInstance().getProducts();
+    private ObservableList<Product> products = FXCollections.observableArrayList();
+    private static Stage popup = new Stage();
+
+    static {
+        Popup.getInstance().setStage(popup);
+    }
+
+    @FXML
+    private JFXDrawer drawer;
+
+    @FXML
+    private JFXButton hbg;
+
+    @FXML
+    private JFXButton btnCart;
+
+    @FXML
+    private HBox hbgWrapper;
+
+    @FXML
+    private ScrollPane scrollPane;
+
+    @FXML
+    private JFXTextField txtSearch;
+
+    @FXML
+    void logout(ActionEvent event) throws IOException {
+        CustomerSession.getInstance().clearCustomerSession();
+        Navigator.getInstance().gotoLogin();
+    }
+
+    @FXML
+    void gotoHome(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoHome();
+    }
+
+    @FXML
+    void gotoCart(ActionEvent event) throws IOException, SQLException {
+        Navigator.getInstance().gotoCart();
+    }
+
+    @FXML
+    void gotoMyAccount(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoMyAccount();
+    }
+
+    @FXML
+    void hbgClick(ActionEvent event) {
+        if (drawer.isClosed()) {
+            drawer.open();
+            drawer.toFront();
+            hbg.setTranslateX(drawer.getWidth());
+        } else {
+            drawer.close();
+            drawer.toBack();
+            hbg.setTranslateX(0);
+        }
+    }
+
+    @FXML
+    void search(ActionEvent event) throws IOException, SQLException {
+        if (!txtSearch.getText().equals("")) {
+            Navigator.getInstance().gotoSearch(txtSearch.getText());
+        }
+    }
+
+    @FXML
+    void enter(KeyEvent event) throws IOException, SQLException {
+        if (event.getCode() == KeyCode.ENTER) {
+            if (!txtSearch.getText().equals("")) {
+                Navigator.getInstance().gotoSearch(txtSearch.getText());
+            }
+        }
+    }
+
+    EventHandler clickProduct = (EventHandler) (Event e) -> {
+        try {
+            Node clickedProduct = (Node) e.getSource();
+            Integer productID = (Integer) clickedProduct.getUserData();
+            Product product = productDao.select(productID);
+            Popup.getInstance().gotoDetail(product);
+            Popup.getInstance().getStage().show();
+        } catch (SQLException ex) {
+            Logger.getLogger(HomeController.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(HomeController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    };
+
+    private void showProducts(ObservableList<Product> products) {
+        scrollPane.setContent(null);
+        int col = 0, row = 0;
+        GridPane gpProductsList = new GridPane();
+        gpProductsList.getStyleClass().addAll("background-white", "gpProductsList");
+        scrollPane.setContent(gpProductsList);
+
+        for (int i = 0; i < 5; i++) {
+            ColumnConstraints column = new ColumnConstraints();
+            column.setHgrow(Priority.ALWAYS);
+            gpProductsList.getColumnConstraints().add(i, column);
+        }
+        
+        for (Product p : products) {
+            VBox vbox = new VBox();
+            Label category = new Label(p.getCategoryName());
+            category.getStyleClass().addAll("hover-hand", "categoryName");
+            category.setOnMouseClicked(event -> {
+                try {
+                    Category c = categoryDao.select(p.getCategoryId());
+                    Navigator.getInstance().gotoBrowse(c);
+                } catch (IOException ex) {
+                    Logger.getLogger(HomeController.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (SQLException ex) {
+                    Logger.getLogger(HomeController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            });
+            VBox imageWrapper = new VBox();
+            ImageView iv = new ImageView(p.getImage());
+            iv.setFitWidth(200);
+            iv.setFitHeight(200);
+            iv.setPreserveRatio(true);
+            iv.setSmooth(true);
+            iv.setCache(true);
+            iv.getStyleClass().addAll("hover-shadow", "hover-hand");
+            iv.setUserData(p.getProductId());
+            iv.setOnMouseClicked(clickProduct);
+            imageWrapper.getChildren().add(iv);
+            imageWrapper.setPrefHeight(200);
+            imageWrapper.setAlignment(Pos.CENTER_LEFT);
+            VBox detail = new VBox();
+            Label name = new Label(p.getProductName());
+            name.setMaxWidth(200);
+            name.getStyleClass().addAll("productName", "hover-hand");
+            name.setUserData(p.getProductId());
+            name.setOnMouseClicked(clickProduct);
+            DecimalFormat df = new DecimalFormat("#,###");
+            Label price = new Label(df.format(p.getPriceProperty().get()) + " VND");
+            price.getStyleClass().add("price");
+            JFXButton addToCart = new JFXButton("Add to Cart");
+            HBox action = new HBox();
+            FontAwesomeIconView check = new FontAwesomeIconView(FontAwesomeIcon.CHECK);
+            check.setSize("25");
+            check.setFill(Paint.valueOf("white"));
+            FadeTransition fade = new FadeTransition(Duration.seconds(1), check);
+            fade.setFromValue(1);
+            fade.setToValue(0);
+            fade.setOnFinished(e -> {
+                check.setFill(Paint.valueOf("white"));
+            });
+            for (OrderDetail item : CustomerSession.getInstance().getCart()) {
+                if (item.getProductName().equals(p.getProductName())) {
+                    FontAwesomeIconView c = new FontAwesomeIconView(FontAwesomeIcon.CHECK);
+                    c.setSize("15");
+                    c.setFill(Paint.valueOf("white"));
+                    addToCart.setGraphic(c);
+                }
+            }
+            addToCart.getStyleClass().addAll("btn-primary", "hover-shadow", "hover-hand", "txt-white", "txt-bold");
+            addToCart.setOnAction((event) -> {
+                boolean existed = false;
+                for (OrderDetail item : CustomerSession.getInstance().getCart()) {
+                    if (item.getProductName().equals(p.getProductName())) {
+                        item.setQuantity(item.getQuantity() + 1);
+                        existed = true;
+                        break;
+                    }
+                }
+                if (!existed) {
+                    OrderDetail newItem = new OrderDetail();
+                    newItem.setProductId(p.getProductId());
+                    newItem.setProductName(p.getProductName());
+                    newItem.setQuantity(1);
+                    newItem.setUnitPrice(p.getPrice());
+                    CustomerSession.getInstance().getCart().add(newItem);
+                    FontAwesomeIconView c = new FontAwesomeIconView(FontAwesomeIcon.CHECK);
+                    c.setSize("15");
+                    c.setFill(Paint.valueOf("white"));
+                    addToCart.setGraphic(c);
+                    btnCart.setText("Cart (" + CustomerSession.getInstance().getCart().size() + ")");
+                }
+                check.setFill(Paint.valueOf("green"));
+                fade.play();
+            });
+
+            action.getChildren().addAll(addToCart, check);
+            action.setSpacing(20);
+            detail.getChildren().addAll(name, price, action);
+            detail.setSpacing(5);
+            vbox.getChildren().addAll(category, imageWrapper, detail);
+            vbox.getStyleClass().add("product-box");
+            GridPane.setConstraints(vbox, col, row);
+            gpProductsList.getChildren().add(vbox);
+            col++;
+            if (col == 5) {
+                row++;
+                col = 0;
+            }
+        }
+    }
+
+    private TreeItem<Category> getSubcategory(Category category) throws SQLException {
+        TreeItem<Category> treeCategory = new TreeItem(category);
+        ObservableList<Category> subCategories = categoryDao.selectSub(category.getCategoryId());
+        for (Category c : subCategories) {
+            TreeItem<Category> tc = new TreeItem(c);
+            if (categoryDao.selectSub(c.getCategoryId()).size() > 0) {
+                tc = getSubcategory(c);
+            }
+            treeCategory.getChildren().add(tc);
+        }
+        return treeCategory;
+    }
+
+    public void initialize() throws SQLException {
+//        VBox sideNav = new VBox();
+//        Label lbCategory = new Label("All categories", new FontAwesomeIconView());
+//        lbCategory.setStyle("-fx-background-color: #6ac2ee;-fx-font-size:17;-fx-text-fill:white");
+//        lbCategory.setPrefHeight(37);
+//        sideNav.getChildren().add(lbCategory);
+//        lbCategory.prefWidthProperty().bind(sideNav.widthProperty());
+//        ObservableList<Category> categories = categoryDao.selectAll();
+//        for (Category category : categories) {
+//            JFXButton btnCategory = new JFXButton(category.getCategoryName());
+//            btnCategory.getStyleClass().addAll("hover-hand", "categoryName");
+//            btnCategory.setOnAction(e -> {
+//                JFXButton clickedCategory = (JFXButton) e.getSource();
+//                try {
+//                    Navigator.getInstance().gotoBrowse(category);
+//                } catch (IOException ex) {
+//                    System.err.println(ex.getMessage());
+//                } catch (SQLException ex) {
+//                    Logger.getLogger(HomeController.class.getName()).log(Level.SEVERE, null, ex);
+//                }
+//            });
+//            btnCategory.setAlignment(Pos.CENTER_LEFT);
+//            sideNav.getChildren().add(btnCategory);
+//            btnCategory.prefWidthProperty().bind(sideNav.widthProperty());
+//        }
+
+        JFXTreeView<Category> sideNav = new JFXTreeView<>();
+        TreeItem<Category> root = new TreeItem();
+        ObservableList<Category> categories = categoryDao.selectMain();
+        for (Category c : categories) {
+            try {
+                root.getChildren().add(getSubcategory(c));
+            } catch (SQLException ex) {
+                System.err.println(ex);
+            }
+        }
+
+        sideNav.setRoot(root);
+        root.setExpanded(true);
+
+        sideNav.getSelectionModel().selectedItemProperty().addListener((o, old, newVal) -> {
+            if (newVal != null) {
+                Category c = newVal.getValue();
+                try {
+                    Navigator.getInstance().gotoBrowse(c);
+                } catch (IOException ex) {
+                    Logger.getLogger(TreeViewController.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (SQLException ex) {
+                    Logger.getLogger(TreeViewController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        });
+
+        drawer.setSidePane(sideNav);
+        drawer.toBack();
+
+        allProducts.stream().sorted(Comparator.comparing(Product::getProductId, (p1, p2) -> {
+            return p2.compareTo(p1);
+        })).limit(20).forEach(p -> {
+            products.add(p);
+        });
+        showProducts(products);
+        btnCart.setText("Cart (" + CustomerSession.getInstance().getCart().size() + ")");
+    }
+}

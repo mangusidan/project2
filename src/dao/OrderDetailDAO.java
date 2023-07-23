@@ -1,0 +1,156 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package dao;
+
+import dbconnection.DbFactory;
+import static dbconnection.DbType.MYSQL;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
+/**
+ *
+ * @author Admin
+ */
+public class OrderDetailDAO implements DAO<OrderDetail> {
+
+    @Override
+    public ObservableList<OrderDetail> selectAll() {
+        ObservableList<OrderDetail> orderdetails = FXCollections.observableArrayList();
+        try (
+                Connection conn = DbFactory.getConnection(MYSQL);
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT orderDetail.*, product.productName FROM orderDetail LEFT JOIN product ON orderDetail.productId = product.productID");) {
+            while (rs.next()) {
+                OrderDetail o = new OrderDetail();
+                o.setOrderId(rs.getInt("orderId"));
+                o.setProductId(rs.getInt("productId"));
+                o.setProductName(rs.getString("productName"));
+                o.setQuantity(rs.getInt("quantity"));
+                o.setUnitPrice(rs.getDouble("unitPrice"));
+                orderdetails.add(o);
+            }
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+        return orderdetails;
+    }
+
+    @Override
+    public OrderDetail insert(OrderDetail newOrderDetail) {
+        String sql = "INSERT into orderDetail (orderId, productId, quantity, unitPrice) VALUES (?, ?, ?, ?)";
+        ResultSet key = null;
+        try (
+                Connection conn = DbFactory.getConnection(MYSQL);
+                PreparedStatement stmt
+                = conn.prepareStatement(sql);) {
+
+            stmt.setInt(1, newOrderDetail.getOrderId());
+            stmt.setInt(2, newOrderDetail.getProductId());
+            stmt.setInt(3, newOrderDetail.getQuantity());
+            stmt.setDouble(4, newOrderDetail.getUnitPrice());
+            int rowInserted = stmt.executeUpdate();
+
+            if (rowInserted == 1) {
+                return newOrderDetail;
+            } else {
+                System.err.println("No order detail inserted");
+                return null;
+            }
+
+        } catch (Exception e) {
+            System.err.println(e);
+            return null;
+        } finally {
+            try {
+                if (key != null) {
+                    key.close();
+                }
+            } catch (SQLException ex) {
+                System.out.println(ex.getMessage());
+            }
+        }
+    }
+
+    @Override
+    public boolean update(OrderDetail orderDetail) {
+        String sql = "UPDATE orderDetail SET `quantity` = ?, unitPrice = ? WHERE orderId = ? AND productId = ?";
+        try (
+                Connection conn = DbFactory.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);) {
+            stmt.setInt(1, orderDetail.getQuantity());
+            stmt.setDouble(2, orderDetail.getUnitPrice());
+            stmt.setInt(3, orderDetail.getOrderId());
+            stmt.setInt(4, orderDetail.getProductId());
+
+            int updated_num_rows = stmt.executeUpdate();
+            if (updated_num_rows == 1) {
+                return true;
+            } else {
+                System.out.println("Some error happened.");
+                return false;
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean delete(OrderDetail orderDetail) {
+        String sql = "DELETE FROM orderDetail WHERE orderId = ? and productId = ?";
+        try (
+                Connection conn = DbFactory.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);) {
+            stmt.setInt(1, orderDetail.getOrderId());
+            stmt.setInt(2, orderDetail.getProductId());
+
+            int del_num_rows = stmt.executeUpdate();
+            if (del_num_rows == 1) {
+                return true;
+            } else {
+                System.out.println("Some error happened.");
+                return false;
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public OrderDetail select(Integer i) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public ObservableList<OrderDetail> selectAllbyOrderId(Integer orderId) {
+        ObservableList<OrderDetail> orderdetails = FXCollections.observableArrayList();
+        String sql = "SELECT orderDetail.*, product.productName FROM orderDetail LEFT JOIN product ON orderDetail.productId = product.productID WHERE orderDetail.orderId = ?";
+        try (
+                Connection conn = DbFactory.getConnection(MYSQL);
+                PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);) {
+            stmt.setInt(1, orderId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                OrderDetail o = new OrderDetail();
+                o.setOrderId(rs.getInt("orderId"));
+                o.setProductId(rs.getInt("productId"));
+                o.setProductName(rs.getString("productName"));
+                o.setQuantity(rs.getInt("quantity"));
+                o.setUnitPrice(rs.getDouble("unitPrice"));
+                orderdetails.add(o);
+            }
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+        return orderdetails;
+    }
+
+}

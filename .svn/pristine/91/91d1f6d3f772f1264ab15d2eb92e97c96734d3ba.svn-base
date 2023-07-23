@@ -1,0 +1,423 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package FoodMart;
+
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXComboBox;
+import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.validation.DoubleValidator;
+import com.jfoenix.validation.IntegerValidator;
+import com.jfoenix.validation.RequiredFieldValidator;
+import dao.AdminSession;
+import dao.Customer;
+import dao.CustomerDAO;
+import dao.Order;
+import dao.OrderDAO;
+import dao.OrderDetail;
+import dao.OrderDetailDAO;
+import dao.Product;
+import dao.ProductDAO;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.sql.SQLException;
+import java.text.DecimalFormat;
+import java.util.Optional;
+import javafx.animation.FadeTransition;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TitledPane;
+import javafx.util.Duration;
+
+/**
+ *
+ * @author Admin
+ */
+public class OrderDetailController {
+
+    private final OrderDetailDAO orderDetailDao = new OrderDetailDAO();
+    private final OrderDAO orderDao = new OrderDAO();
+    private final CustomerDAO customerDao = new CustomerDAO();
+    private final ProductDAO productDao = new ProductDAO();
+    private ObservableList<OrderDetail> orderDetails;
+    private Order order;
+    private OrderDetail editDetail = null;
+    private final DecimalFormat df = new DecimalFormat("#,###");
+    ChangeListener<String> unitPriceListener;
+    ChangeListener<String> quantityListener;
+    
+
+    @FXML
+    private Label txtOrderId;
+
+    @FXML
+    private Label noti;
+
+    @FXML
+    private JFXButton admin;
+
+    @FXML
+    private TableView<OrderDetail> tvDetails;
+
+    @FXML
+    private TableColumn<OrderDetail, String> tcProduct;
+
+    @FXML
+    private TableColumn<OrderDetail, Double> tcPrice;
+
+    @FXML
+    private TableColumn<OrderDetail, Integer> tcQuantity;
+
+    @FXML
+    private TableColumn<OrderDetail, Double> tcSubtotal;
+
+    @FXML
+    private TableColumn<OrderDetail, String> tcAvailability;
+
+    @FXML
+    private Label txtTotalPrice;
+
+    @FXML
+    private TitledPane paneProduct;
+
+    @FXML
+    private Label txtProductName;
+
+    @FXML
+    private Label txtPrice;
+
+    @FXML
+    private Label txtStock;
+
+    @FXML
+    private Label txtDescription;
+
+    @FXML
+    private Label txtCategory;
+
+    @FXML
+    private Label txtCustomerName;
+
+    @FXML
+    private Label txtAddress;
+
+    @FXML
+    private Label txtEmail;
+
+    @FXML
+    private Label txtPhone;
+
+    @FXML
+    private Label txtStatus;
+
+    @FXML
+    private Label txtDate;
+
+    @FXML
+    private TitledPane paneAction;
+
+    @FXML
+    private JFXComboBox<String> cbStatus;
+
+    @FXML
+    private Label txtProduct;
+
+    @FXML
+    private JFXTextField txtUnitPrice;
+
+    @FXML
+    private JFXTextField txtQuantity;
+
+    @FXML
+    private Label txtSubtotal;
+
+    @FXML
+    void gotoAdmin(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoAdminIndex();
+    }
+
+    @FXML
+    void gotoCategory(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoCategoryIndex();
+    }
+
+    @FXML
+    void gotoCustomer(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoCustomerIndex();
+    }
+
+    @FXML
+    void gotoProduct(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoProductIndex();
+    }
+
+    @FXML
+    void gotoOrder(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoOrderIndex();
+    }
+
+    @FXML
+    void logout(ActionEvent event) throws IOException {
+        AdminSession.getInstance().clearAdminSession();
+        Navigator.getInstance().gotoLogin();
+    }
+
+    @FXML
+    void back(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoOrderIndex();
+    }
+
+    @FXML
+    void clear(ActionEvent event) {
+        clearFields();
+    }
+
+    @FXML
+    void save(ActionEvent event) throws NoSuchAlgorithmException {
+        if (editDetail != null) {
+            removeListener();
+            if (validate()) {
+                editDetail.setUnitPrice(Double.parseDouble(txtUnitPrice.getText()));
+                editDetail.setQuantity(Integer.parseInt(txtQuantity.getText()));
+                boolean result = orderDetailDao.update(editDetail);
+                if (result) {
+                    noti.setText("Order detail updated successfully!");
+                    FadeTransition fade = new FadeTransition(Duration.seconds(1), noti);
+                    fade.setDelay(Duration.seconds(2));
+                    fade.setFromValue(1);
+                    fade.setToValue(0);
+                    fade.setOnFinished(e -> {
+                        noti.setText("");
+                        noti.setOpacity(1);
+                    });
+                    fade.play();
+                    txtTotalPrice.setText(df.format(buildTableviewData()) + " VND");
+                } else {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Error");
+                    alert.setHeaderText("Error occurs when update order details.");
+                    alert.showAndWait();
+                }
+                editDetail = null;
+                txtProduct.setText("");
+                clearFields();
+            } else {
+                addListener();
+            }
+        }
+    }
+
+    @FXML
+    void updateStatus(ActionEvent event) {
+        RequiredFieldValidator require = new RequiredFieldValidator();
+        cbStatus.getValidators().add(require);
+        if (cbStatus.validate()) {
+            int status = 1;
+            if (cbStatus.getValue().equals("Confirmed")) {
+                if (!checkAvailability()) {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Error");
+                    alert.setHeaderText("There are not enough products in stock. Please adjust quantity or cancel this order");
+                    alert.showAndWait();
+                } else {
+                    Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+                    confirm.setTitle("Confirm order");
+                    confirm.setHeaderText("You cannot change order details once confirmed. Are you sure?");
+                    Optional<ButtonType> confirmationResponse = confirm.showAndWait();
+                    if (confirmationResponse.get() == ButtonType.OK) {
+                        status = 2;
+                        for (OrderDetail item : orderDetails) {
+                            Product product = productDao.select(item.getProductId());
+                            product.setStock(product.getStock() - item.getQuantity());
+                            boolean rs = productDao.update(product);
+                            if (!rs) {
+                                Alert alert = new Alert(Alert.AlertType.ERROR);
+                                alert.setTitle("Error");
+                                alert.setHeaderText("Error occurs when adjust product stock.");
+                                alert.showAndWait();
+                            }
+                        }
+                    }
+                }
+            } else {
+                Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+                confirm.setTitle("Cancel order");
+                confirm.setHeaderText("You cannot change order details once cancelled. Are you sure?");
+                Optional<ButtonType> confirmationResponse = confirm.showAndWait();
+                if (confirmationResponse.get() == ButtonType.OK) {
+                    status = 3;
+                }
+            }
+            if (status != 1) {
+                order.setStatusCode(status);
+                order.setStatus(cbStatus.getValue());
+                orderDao.update(order);
+                boolean result = orderDao.update(order);
+                if (!result) {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Error");
+                    alert.setHeaderText("Error occurs when update order status.");
+                    alert.showAndWait();
+                } else {
+                    noti.setText("Update order status successfully.");
+                    FadeTransition fade = new FadeTransition(Duration.seconds(1), noti);
+                    fade.setDelay(Duration.seconds(2));
+                    fade.setFromValue(1);
+                    fade.setToValue(0);
+                    fade.setOnFinished(e -> {
+                        noti.setText("");
+                        noti.setOpacity(1);
+                    });
+                    fade.play();
+                    paneAction.setDisable(true);
+                    txtStatus.setText("Status: " + order.getStatus());
+                    tvDetails.getSelectionModel().clearSelection();
+                    paneProduct.setExpanded(false);
+                }
+            }
+        }
+    }
+
+    private boolean checkAvailability() {
+        for (OrderDetail item : orderDetails) {
+            Product product = productDao.select(item.getProductId());
+            if (item.getQuantity() > product.getStock()) {
+                return false;
+            };
+        }
+        return true;
+    }
+
+    private void calculateSubtotal() {
+        if (!txtUnitPrice.getText().equals("") && !txtQuantity.getText().equals("")) {
+            Double unitPrice = Double.parseDouble(txtUnitPrice.getText());
+            Integer quantity = Integer.parseInt(txtQuantity.getText());
+            txtSubtotal.setText(Double.toString(unitPrice * quantity));
+        }
+    }
+    
+    private void addListener(){
+        txtUnitPrice.textProperty().addListener(unitPriceListener);
+        txtQuantity.textProperty().addListener(quantityListener);
+    }
+    
+    private void removeListener(){
+        txtUnitPrice.textProperty().removeListener(unitPriceListener);
+        txtQuantity.textProperty().removeListener(quantityListener);
+    }
+
+    private boolean validate() {
+        RequiredFieldValidator required = new RequiredFieldValidator();
+        DoubleValidator doubleValidator = new DoubleValidator();
+        IntegerValidator intValidator = new IntegerValidator();
+        required.setMessage("Input Required");
+        txtUnitPrice.getValidators().addAll(required, doubleValidator);
+        txtQuantity.getValidators().addAll(required, intValidator);
+        txtUnitPrice.validate();
+        txtQuantity.validate();
+        return txtUnitPrice.validate() && txtQuantity.validate();
+    }
+
+    private Double buildTableviewData() {
+        orderDetails = orderDetailDao.selectAllbyOrderId(order.getOrderId());
+        tvDetails.setItems(orderDetails);
+        tcProduct.setCellValueFactory((detail) -> {
+            return detail.getValue().getProductNameProperty();
+        });
+        tcPrice.setCellValueFactory((detail) -> {
+            return detail.getValue().getUnitPriceProperty();
+        });
+        tcQuantity.setCellValueFactory((detail) -> {
+            return detail.getValue().getQuantityProperty();
+        });
+        tcSubtotal.setCellValueFactory((detail) -> {
+            return new SimpleObjectProperty<>(detail.getValue().getSubTotal());
+        });
+        tcAvailability.setCellValueFactory((detail) -> {
+            Integer stock = productDao.select(detail.getValue().getProductId()).getStock();
+            String availability = detail.getValue().getQuantity() <= stock ? "Available" : "Not available";
+            return new SimpleStringProperty(availability);
+        });
+        Double totalPrice = 0.0;
+        for (OrderDetail d : orderDetails) {
+            totalPrice += d.getSubTotal();
+        }
+        return totalPrice;
+    }
+
+    private void clearFields() {
+        txtUnitPrice.setText("");
+        txtQuantity.setText("");
+        txtSubtotal.setText("");
+    }
+
+    public void initialize(Order order) throws SQLException {
+        this.order = order;
+        txtOrderId.setText("Order #" + Integer.toString(order.getOrderId()));
+        txtDate.setText("Date: " + order.getDate().toString());
+        txtTotalPrice.setText(df.format(buildTableviewData()) + " VND");
+        Customer customer = customerDao.select(order.getCustomerId());
+        txtCustomerName.setText(customer.getFullName());
+        txtAddress.setText(customer.getAddress());
+        txtEmail.setText(customer.getEmail());
+        txtPhone.setText(customer.getPhone());
+        txtStatus.setText("Status: " + order.getStatus());
+
+        if (order.getStatus().equals("Pending")) {
+            cbStatus.getItems().addAll("Confirmed", "Cancelled");
+        } else {
+            paneAction.setDisable(true);
+        }
+        admin.setText(AdminSession.getInstance().getAdminName());
+
+        tvDetails.getSelectionModel().selectedItemProperty().addListener((obs, old, newSelection) -> {
+            if (newSelection != null) {
+                Product product = productDao.select(newSelection.getProductId());
+                txtProductName.setText(product.getProductName());
+                txtPrice.setText(df.format(product.getPrice()) + " VND");
+                txtStock.setText(Integer.toString(product.getStock()) + " in stock");
+                txtDescription.setText(product.getDescription());
+                txtCategory.setText(product.getCategoryName());
+                paneProduct.setDisable(false);
+                paneProduct.setExpanded(true);
+
+                if (order.getStatus().equals("Pending")) {
+                    editDetail = newSelection;
+                    txtProduct.setText(newSelection.getProductName());
+                    txtUnitPrice.setText(Double.toString(newSelection.getUnitPrice()));
+                    txtQuantity.setText(Integer.toString(newSelection.getQuantity()));
+                    txtSubtotal.setText(Double.toString(newSelection.getSubTotal()));
+                    txtUnitPrice.textProperty().addListener((obsv, oldVal, newVal) -> {
+                        calculateSubtotal();
+                    });
+                    txtQuantity.textProperty().addListener((obsv, oldVal, newVal) -> {
+                        calculateSubtotal();
+                    });
+                }
+            }
+        });
+        
+        unitPriceListener = (ObservableValue<? extends String> o, String oldVal, String newVal) -> {
+            if (newVal == null ? oldVal != null : !newVal.equals(oldVal)) {
+                txtUnitPrice.validate();
+            }
+        };
+        quantityListener = (ObservableValue<? extends String> o, String oldVal, String newVal) -> {
+            if (newVal == null ? oldVal != null : !newVal.equals(oldVal)) {
+                txtQuantity.validate();
+            }
+        };
+    }
+}

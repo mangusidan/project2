@@ -1,0 +1,238 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package FoodMart;
+
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.validation.IntegerValidator;
+import dao.CustomerSession;
+import dao.OrderDetail;
+import dao.OrderDetailDAO;
+import dao.Product;
+import dao.ProductDAO;
+import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
+import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.text.DecimalFormat;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.geometry.Pos;
+import javafx.scene.Cursor;
+import javafx.scene.Node;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
+import static javax.management.Query.minus;
+import static javax.management.Query.plus;
+import org.controlsfx.glyphfont.FontAwesome;
+
+/**
+ *
+ * @author Admin
+ */
+public class CartController {
+
+    ProductDAO productDao = new ProductDAO();
+
+    OrderDetailDAO orderDetailDao = new OrderDetailDAO();
+
+    private ObservableList<OrderDetail> cart;
+
+    @FXML
+    private GridPane gpCartItems;
+    private Integer count = 1; 
+    @FXML
+    void goToHome(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoHome();
+    }
+
+    @FXML
+    void goToMyAccount(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoMyAccount();
+    }
+
+    @FXML
+    void gotoCart(ActionEvent event) throws IOException, SQLException {
+        Navigator.getInstance().gotoCart();
+    }
+
+    @FXML
+    void logout(ActionEvent event) throws IOException {
+        CustomerSession.getInstance().clearCustomerSession();
+        Navigator.getInstance().gotoLogin();
+    }
+
+    @FXML
+    void shop(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoHome();
+    }
+
+    @FXML
+    void checkout(ActionEvent event) throws IOException, SQLException {
+        Navigator.getInstance().gotoCheckout();
+    }
+
+    private Double getTotalPrice() {
+        Double t = 0.0;
+        for (OrderDetail item : cart) {
+            t += item.getSubTotal();
+        }
+        return t;
+    }
+
+    private void loadCart() {
+        gpCartItems.getChildren().removeIf(node -> GridPane.getRowIndex(node) != null && GridPane.getRowIndex(node) != 0);
+        Double totalPrice = 0.0;
+        int row = 1;
+        DecimalFormat df = new DecimalFormat("#,###");
+        for (int i = 0; i < cart.size(); i++) {
+            OrderDetail item = cart.get(i);
+            Product product = productDao.select(item.getProductId());
+            HBox col_1 = new HBox();
+            ImageView iv = new ImageView(product.getImage());
+            iv.setFitWidth(150);
+            iv.setFitHeight(150);
+            iv.setPreserveRatio(true);
+            iv.setSmooth(true);
+            iv.setCache(true);
+            Label name = new Label(product.getProductName());
+            col_1.getChildren().addAll(iv, name);
+            GridPane.setConstraints(col_1, 0, row);
+
+//            HBox col_2 = new HBox();
+//            FontAwesome plus = new FontAwesome();
+//            FontAwesome minus = new FontAwesome();
+//            TextField txt_qty = new TextField();
+//            txt_qty.setPrefSize(50, 10);
+//            txt_qty.setAlignment(Pos.CENTER);
+//            txt_qty.setStyle("-fx-font-size: 15px;");
+//
+//            txt_qty.setText(Integer.toString(count));
+//            IntegerValidator iv = new IntegerValidator();
+//            txt_qty.getValidators().add(iv);
+//            txt_qty.textProperty().addListener((obs, oldVal, newVal) -> {
+//                if (!txt_qty.validate()) {
+//                    txt_qty.setText(oldVal);
+//                } else if (!newVal.equals("") && Integer.parseInt(newVal) > product.getStock()) {
+//                    txt_qty.setText(oldVal);
+//                } else if (!newVal.equals("")) {
+//                    count = Integer.parseInt(newVal);
+//                }
+//                item.setQuantity((Integer) newVal);
+//                Label t = (Label) gpCartItems.lookup("#" + item.getProductId());
+//                t.setText(df.format(item.getSubTotal()) + " VND");
+//                Label s = (Label) gpCartItems.lookup("#total");
+//                s.setText("Subtotal: " + df.format(getTotalPrice()) + " VND");
+//            });
+//            Button b1 = new Button();
+//            b1.setStyle("-fx-font-size: 15px;"
+//                    + "-fx-background-color:transparent;");
+//            b1.setPrefSize(25, 21);
+//            b1.setMinSize(25, 21);
+//
+//            plus.setGlyphName("PLUS");
+//            plus.setCursor(Cursor.HAND);
+//            plus.setSize("1em");
+//            plus.setFill(Color.WHITE);
+//            plus.setMouseTransparent(true);
+//
+//            b1.setGraphic(plus);
+//            b1.setCursor(Cursor.HAND);
+//
+//            Button b2 = new Button();
+//            b2.setStyle("-fx-font-size: 15px;"
+//                    + "-fx-background-color:transparent;");
+//            b2.setPrefSize(25, 21);
+//            b2.setMinSize(25, 21);
+//
+//            minus.setGlyphName("MINUS");
+//            minus.setCursor(Cursor.HAND);
+//            minus.setSize("1em");
+//            minus.setFill(Color.WHITE);
+//            minus.setMouseTransparent(true);
+//            b2.setGraphic(minus);
+//            b2.setCursor(Cursor.HAND);
+//
+//            b1.setOnMouseClicked(c -> {
+//                count++;
+//                txt_qty.setText(Integer.toString(count));
+//            });
+//            b2.setOnMouseClicked(c -> {
+//                count--;
+//                txt_qty.setText(Integer.toString(count));
+//            });
+//            
+//            col_2.getChildren().add(b2, txt_qty, b1);
+//            GridPane.setConstraints(col_2, 1, row);
+            
+            HBox col_2 = new HBox();
+            Spinner quantity = new Spinner(0, product.getStock(), item.getQuantity());
+            quantity.valueProperty().addListener((obs, oldVal, newVal) -> {
+                item.setQuantity((Integer) newVal);
+                Label t = (Label) gpCartItems.lookup("#" + item.getProductId());
+                t.setText(df.format(item.getSubTotal()) + " VND");
+                Label s = (Label) gpCartItems.lookup("#total");
+                s.setText("Subtotal: " + df.format(getTotalPrice()) + " VND");
+            });
+            col_2.getChildren().add(quantity);
+            GridPane.setConstraints(col_2, 1, row);
+
+            HBox col_3 = new HBox();
+            Label price = new Label(df.format(item.getUnitPrice()) + " VND");
+            col_3.getChildren().add(price);
+            GridPane.setConstraints(col_3, 2, row);
+
+            HBox col_4 = new HBox();
+            Label total = new Label(df.format(item.getSubTotal()) + " VND");
+            total.setId(Integer.toString(item.getProductId()));
+            JFXButton del = new JFXButton(" ");
+            FontAwesomeIconView x = new FontAwesomeIconView(FontAwesomeIcon.TIMES_CIRCLE);
+            x.setFill(Paint.valueOf("#6ac2ee"));
+            x.setSize("20");
+            del.setGraphic(x);
+            del.setOnAction(e -> {
+                int rowIndex = GridPane.getRowIndex(del.getParent());
+                gpCartItems.getChildren().removeIf(node -> GridPane.getRowIndex(node) != null && GridPane.getRowIndex(node) == rowIndex);
+                cart.remove(item);
+                Label s = (Label) gpCartItems.lookup("#total");
+                s.setText("Subtotal: " + df.format(getTotalPrice()) + " VND");
+            });
+            col_4.getChildren().addAll(total, del);
+            col_4.setSpacing(50);
+            GridPane.setConstraints(col_4, 3, row);
+
+            gpCartItems.getChildren().addAll(col_1, col_2, col_3, col_4);
+            totalPrice += item.getSubTotal();
+            row++;
+        }
+        HBox lastCell = new HBox();
+        Label subtotal = new Label("Subtotal: " + df.format(totalPrice) + " VND");
+        subtotal.setId("total");
+        lastCell.getChildren().add(subtotal);
+        lastCell.setPrefHeight(50);
+        GridPane.setConstraints(lastCell, 3, row);
+        gpCartItems.getChildren().add(lastCell);
+
+        gpCartItems.getChildren().forEach(hbox -> {
+            hbox.getStyleClass().add("cart-cell");
+        });
+    }
+
+    public void initialize() throws SQLException {
+        cart = CustomerSession.getInstance().getCart();
+//      cart = orderDetailDao.selectAll();
+        loadCart();
+    }
+}

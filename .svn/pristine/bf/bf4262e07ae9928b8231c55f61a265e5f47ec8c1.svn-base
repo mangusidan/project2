@@ -1,0 +1,148 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package FoodMart;
+
+import com.jfoenix.controls.JFXButton;
+import dao.AdminSession;
+import java.io.IOException;
+import java.net.URL;
+import java.util.ResourceBundle;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.PieChart;
+import javafx.scene.chart.XYChart;
+import javafx.scene.layout.AnchorPane;
+
+/**
+ *
+ * @author DELL
+ */
+public class DashboardController implements Initializable {
+
+    @FXML
+    private JFXButton admin;
+
+    @FXML
+    private PieChart pieChart;
+
+    @FXML
+    void gotoOrder(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoOrderIndex();
+    }
+
+    @FXML
+    void btnAdminsClick(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoAdminIndex();
+    }
+
+    @FXML
+    void btnCategoriesClick(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoCategoryIndex();
+    }
+
+    @FXML
+    void btnCustomersClick(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoCustomerIndex();
+    }
+
+    @FXML
+    void btnProductsClick(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoProductIndex();
+    }
+
+    @FXML
+    void btnLogoutClick(ActionEvent event) throws IOException {
+        AdminSession.getInstance().clearAdminSession();
+        Navigator.getInstance().gotoLogin();
+    }
+
+    @FXML
+    private LineChart<?, ?> LineChart;
+
+    @FXML
+    private CategoryAxis x;
+
+    @FXML
+    private NumberAxis y;
+
+    @Override
+
+    public void initialize(URL location, ResourceBundle resources) {
+        XYChart.Series series = new XYChart.Series();
+        series.getData().add(new XYChart.Data<>(1, 110));
+        series.getData().add(new XYChart.Data<>(2, 120));
+        series.getData().add(new XYChart.Data<>(3, 130));
+        series.getData().add(new XYChart.Data<>(4, 140));
+        series.getData().add(new XYChart.Data<>(5, 150));
+        series.getData().add(new XYChart.Data<>(6, 160));
+        series.getData().add(new XYChart.Data<>(7, 170));
+        series.getData().add(new XYChart.Data<>(8, 180));
+        series.getData().add(new XYChart.Data<>(9, 190));
+        series.getData().add(new XYChart.Data<>(0, 0));
+        series.getData().add(new XYChart.Data<>(0, 0));
+        series.getData().add(new XYChart.Data<>(0, 0));
+
+        XYChart.Series series2 = new XYChart.Series();
+        series2.getData().add(new XYChart.Data<>(1, 210));
+        series2.getData().add(new XYChart.Data<>(2, 220));
+        series2.getData().add(new XYChart.Data<>(3, 230));
+        series2.getData().add(new XYChart.Data<>(4, 240));
+        series2.getData().add(new XYChart.Data<>(5, 250));
+        series2.getData().add(new XYChart.Data<>(6, 260));
+        series2.getData().add(new XYChart.Data<>(7, 270));
+        series2.getData().add(new XYChart.Data<>(8, 280));
+        series2.getData().add(new XYChart.Data<>(9, 290));
+        series2.getData().add(new XYChart.Data<>(0, 0));
+        series2.getData().add(new XYChart.Data<>(0, 0));
+        series2.getData().add(new XYChart.Data<>(0, 0));
+
+        XYChart.Series series3 = new XYChart.Series();
+        series3.getData().add(new XYChart.Data<>(1, 310));
+        series3.getData().add(new XYChart.Data<>(2, 320));
+        series3.getData().add(new XYChart.Data<>(3, 330));
+        series3.getData().add(new XYChart.Data<>(4, 340));
+        series3.getData().add(new XYChart.Data<>(5, 350));
+        series3.getData().add(new XYChart.Data<>(6, 360));
+        series3.getData().add(new XYChart.Data<>(7, 370));
+        series3.getData().add(new XYChart.Data<>(8, 380));
+        series3.getData().add(new XYChart.Data<>(9, 390));
+        series3.getData().add(new XYChart.Data<>(0, 0));
+        series3.getData().add(new XYChart.Data<>(0, 0));
+        series3.getData().add(new XYChart.Data<>(0, 0));
+
+        XYChart.Series series4 = new XYChart.Series();
+        series4.getData().add(new XYChart.Data<>(1, 410));
+        series4.getData().add(new XYChart.Data<>(2, 420));
+        series4.getData().add(new XYChart.Data<>(3, 430));
+        series4.getData().add(new XYChart.Data<>(4, 440));
+        series4.getData().add(new XYChart.Data<>(5, 450));
+        series4.getData().add(new XYChart.Data<>(6, 460));
+        series4.getData().add(new XYChart.Data<>(7, 470));
+        series4.getData().add(new XYChart.Data<>(8, 480));
+        series4.getData().add(new XYChart.Data<>(9, 490));
+        series4.getData().add(new XYChart.Data<>(0, 0));
+        series4.getData().add(new XYChart.Data<>(0, 0));
+        series4.getData().add(new XYChart.Data<>(0, 0));
+
+        LineChart.getData().addAll(series, series2, series3, series4);
+
+        ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList(
+                new PieChart.Data("Bánh mì", 13),
+                new PieChart.Data("coffee", 23),
+                new PieChart.Data("daily", 34),
+                new PieChart.Data("rau",30)
+        );
+        pieChart.setData(pieChartData);
+        pieChart.setStartAngle(90);
+    }
+
+}

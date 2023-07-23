@@ -1,0 +1,325 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package FoodMart;
+
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXPasswordField;
+import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.validation.RegexValidator;
+import com.jfoenix.validation.RequiredFieldValidator;
+import dao.Admin;
+import dao.AdminDAO;
+import dao.AdminSession;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.sql.SQLException;
+import java.util.Optional;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javax.xml.bind.DatatypeConverter;
+
+/**
+ *
+ * @author Admin
+ */
+public class AdminController {
+
+    private AdminDAO adminDao = new AdminDAO();
+
+    private Admin edit_admin = null;
+
+    private ChangeListener<String> nameListener;
+    private ChangeListener<String> emailListener;
+    private ChangeListener<String> pwdListener;
+
+    @FXML
+    private JFXButton admin;
+
+    @FXML
+    private Label labelEditor;
+
+    @FXML
+    private JFXTextField txtAdminName;
+
+    @FXML
+    private JFXTextField txtEmail;
+
+    @FXML
+    private JFXPasswordField txtPassword;
+
+    @FXML
+    private TableView<Admin> tvAdmins;
+
+    @FXML
+    private TableColumn<Admin, String> tcAdminName;
+
+    @FXML
+    private TableColumn<Admin, String> tcEmail;
+
+    @FXML
+    void gotoOrder(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoOrderIndex();
+    }
+
+    @FXML
+    void gotoAdmin(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoAdminIndex();
+    }
+
+    @FXML
+    void gotoCategory(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoCategoryIndex();
+    }
+
+    @FXML
+    void gotoCustomer(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoCustomerIndex();
+    }
+
+    @FXML
+    void gotoProduct(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoProductIndex();
+    }
+
+    @FXML
+    private TextField filterField;
+
+    @FXML
+    void logout(ActionEvent event) throws IOException {
+        AdminSession.getInstance().clearAdminSession();
+        Navigator.getInstance().gotoLogin();
+    }
+
+    @FXML
+    void clear(ActionEvent event) {
+        clearFields();
+    }
+
+    @FXML
+    void refresh(ActionEvent event) {
+        buildTableviewData();
+    }
+
+    @FXML
+    void createNew(ActionEvent event) {
+        labelEditor.setText("New Admin Details");
+        edit_admin = null;
+        clearFields();
+    }
+
+    @FXML
+    void edit(ActionEvent event) {
+        Admin selectedAdmin = tvAdmins.getSelectionModel().getSelectedItem();
+        if (selectedAdmin == null) {
+            selectWarning();
+        } else {
+            labelEditor.setText("Edit Admin Details");
+            edit_admin = selectedAdmin;
+            txtAdminName.setText(selectedAdmin.getAdminName());
+            txtEmail.setText(selectedAdmin.getEmail());
+        }
+    }
+
+    @FXML
+    void save(ActionEvent event) throws NoSuchAlgorithmException {
+        removeListener();
+        if (validate()) {
+            Admin extracted = extract_admin_from_fields();
+            if (adminDao.isUnique(extracted.getEmail())) {
+                if (edit_admin == null) {
+                    adminDao.insert(extracted);
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Notification");
+                    alert.setHeaderText("NEW ADMIN CREATED!");
+                    alert.showAndWait();
+                } else {
+                    edit_admin.setAdminName(extracted.getAdminName());
+                    edit_admin.setEmail(extracted.getEmail());
+                    edit_admin.setPassword(extracted.getPassword());
+                    adminDao.update(edit_admin);
+                    edit_admin = null;
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Notification");
+                    alert.setHeaderText("ADMIN EDITED!");
+                    alert.showAndWait();
+                }
+                clearFields();
+                labelEditor.setText("New Admin Details");
+            } else {
+                System.out.println("email existed");
+            }
+        } else {
+            addListener();
+        }
+    }
+
+    @FXML
+    void delete(ActionEvent event) {
+        Admin selectedAdmin = tvAdmins.getSelectionModel().getSelectedItem();
+        if (selectedAdmin == null) {
+            selectWarning();
+        } else {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("DELETE");
+            alert.setHeaderText("Are you sure you want to delete this admin?");
+            Optional<ButtonType> confirmationResponse = alert.showAndWait();
+            if (confirmationResponse.get() == ButtonType.OK) {
+                boolean result = adminDao.delete(selectedAdmin);
+                if (result) {
+                    tvAdmins.getItems().remove(selectedAdmin);
+//                    logger.error(Translator.getResource().getString("delete.successful.message"));
+                } else {
+//                    logger.error(Translator.getResource().getString("delete.error.message"));
+                }
+            }
+            labelEditor.setText("New Admin Details");
+            edit_admin = null;
+        }
+    }
+
+    private void addListener() {
+        txtAdminName.textProperty().addListener(nameListener);
+        txtEmail.textProperty().addListener(emailListener);
+        txtPassword.textProperty().addListener(pwdListener);
+    }
+
+    private void removeListener() {
+        txtAdminName.textProperty().removeListener(nameListener);
+        txtEmail.textProperty().removeListener(emailListener);
+        txtPassword.textProperty().removeListener(pwdListener);
+    }
+
+    private boolean validate() {
+        RequiredFieldValidator required = new RequiredFieldValidator();
+        RegexValidator regexEmail = new RegexValidator("Please enter valid email");
+        regexEmail.setRegexPattern("\"/\\S+@\\S+\\.\\S+/\"");
+        RegexValidator pwdEmail = new RegexValidator("Password must have at least 8 characters and include letters and numbers");
+        pwdEmail.setRegexPattern("/^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$/");
+        required.setMessage("Input Required");
+        txtAdminName.getValidators().add(required);
+        txtEmail.getValidators().addAll(required);
+        txtPassword.getValidators().addAll(required);
+        txtAdminName.validate();
+        txtEmail.validate();
+        txtPassword.validate();
+        return txtAdminName.validate() && txtEmail.validate() && txtPassword.validate();
+    }
+
+    private Admin extract_admin_from_fields() throws NoSuchAlgorithmException {
+        Admin a = new Admin();
+        a.setAdminName(txtAdminName.getText());
+        a.setEmail(txtEmail.getText());
+        a.setPassword(sha1(txtPassword.getText()));
+        return a;
+    }
+
+    private void selectWarning() {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("WARNING");
+        alert.setHeaderText("Please select an admin to perform this operation!");
+        alert.showAndWait();
+    }
+
+    private void buildTableviewData() {
+        ObservableList<Admin> admins;
+        admins = adminDao.selectAll();
+        tvAdmins.setItems(admins);
+        tcAdminName.setCellValueFactory((admin) -> {
+            return admin.getValue().getAdminNameProperty();
+        });
+        tcEmail.setCellValueFactory((admin) -> {
+            return admin.getValue().getEmailProperty();
+        });
+    }
+
+    private void clearFields() {
+        txtAdminName.setText("");
+        txtEmail.setText("");
+        txtPassword.setText("");
+    }
+
+    public String sha1(String input) throws NoSuchAlgorithmException {
+        String sha1 = null;
+        try {
+            MessageDigest msdDigest = MessageDigest.getInstance("SHA-1");
+            msdDigest.update(input.getBytes("UTF-8"), 0, input.length());
+            sha1 = DatatypeConverter.printHexBinary(msdDigest.digest());
+        } catch (UnsupportedEncodingException | NoSuchAlgorithmException e) {
+            System.err.println("sha1 error");
+        }
+        return sha1;
+    }
+
+    private ObservableList<Admin> dataList = FXCollections.observableArrayList();
+
+    @FXML
+    void search() {
+        tcAdminName.setCellValueFactory(new PropertyValueFactory<>("adminName"));
+        tcEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
+        dataList = adminDao.selectAll();
+        tvAdmins.setItems(dataList);
+
+        FilteredList<Admin> filteredData = new FilteredList<>(dataList, b -> true);
+        filterField.textProperty().addListener((observable, oldValue, newValue) -> {
+            filteredData.setPredicate((Admin admin) -> {
+
+                if (newValue == null || newValue.isEmpty()) {
+                    return true;
+                }
+                String lowerCaseFilter = newValue.toLowerCase();
+                if (String.valueOf(admin.getAdminId()).contains(lowerCaseFilter)) {
+                    return true;
+                } else if (admin.getAdminName().toLowerCase().contains(lowerCaseFilter)) {
+                    return true;
+                } else if (String.valueOf(admin.getEmail()).toLowerCase().contains(lowerCaseFilter)) {
+                    return true;
+                } else {
+                    return false;
+                }
+
+            });
+        });
+        SortedList<Admin> sortedData = new SortedList<>(filteredData);
+        sortedData.comparatorProperty().bind(tvAdmins.comparatorProperty());
+        tvAdmins.setItems(sortedData);
+    }
+
+    public void initialize() throws SQLException {
+        buildTableviewData();
+        admin.setText(AdminSession.getInstance().getAdminName());
+
+        nameListener = (ObservableValue<? extends String> o, String oldVal, String newVal) -> {
+            if (newVal == null ? oldVal != null : !newVal.equals(oldVal)) {
+                txtAdminName.validate();
+            }
+        };
+        emailListener = (ObservableValue<? extends String> o, String oldVal, String newVal) -> {
+            if (newVal == null ? oldVal != null : !newVal.equals(oldVal)) {
+                txtEmail.validate();
+            }
+        };
+        pwdListener = (ObservableValue<? extends String> o, String oldVal, String newVal) -> {
+            if (newVal == null ? oldVal != null : !newVal.equals(oldVal)) {
+                txtPassword.validate();
+            }
+        };
+    }
+}

@@ -1,0 +1,252 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package FoodMart;
+
+import com.jfoenix.controls.JFXButton;
+import dao.AdminSession;
+import dao.Product;
+import dao.ProductDAO;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.Optional;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.stage.Stage;
+
+/**
+ *
+ * @author Admin
+ */
+public class ProductController {
+
+    private ProductDAO productDao = new ProductDAO();
+    private ObservableList<Product> dataList = FXCollections.observableArrayList();
+    private static Stage popup = new Stage();
+    
+    static {
+        Popup.getInstance().setStage(popup);
+    }
+
+    @FXML
+    private JFXButton admin;
+
+    @FXML
+    private TableView<Product> tvProducts;
+
+//    @FXML
+//    private TableColumn<Product, Integer> tcProductId;
+
+    @FXML
+    private TableColumn<Product, String> tcProductName;
+
+    @FXML
+    private TableColumn<Product, Double> tcPrice;
+
+    @FXML
+    private TableColumn<Product, Integer> tcStock;
+
+    @FXML
+    private TableColumn<Product, String> tcDescription;
+
+    @FXML
+    private TableColumn<Product, String> tcCategory;
+
+    @FXML
+    private TableColumn<Product, String> tcImage;
+
+    @FXML
+    private TextField filterField;
+
+    @FXML
+    void gotoOrder(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoOrderIndex();
+    }
+
+    @FXML
+    void gotoProduct(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoProductIndex();
+    }
+
+    @FXML
+    void gotoAdmin(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoAdminIndex();
+    }
+
+    @FXML
+    void gotoCategory(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoCategoryIndex();
+    }
+
+    @FXML
+    void gotoCustomer(ActionEvent event) throws IOException {
+        Navigator.getInstance().gotoCustomerIndex();
+    }
+
+    @FXML
+    void logout(ActionEvent event) throws IOException {
+        AdminSession.getInstance().clearAdminSession();
+        Navigator.getInstance().gotoLogin();
+    }
+
+    @FXML
+    void delete(ActionEvent event) {
+        Product selectedProduct = tvProducts.getSelectionModel().getSelectedItem();
+        if (selectedProduct == null) {
+            selectWarning();
+        } else {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("DELETE");
+            alert.setHeaderText("Are you sure you want to delete this product?");
+            Optional<ButtonType> confirmationResponse = alert.showAndWait();
+            if (confirmationResponse.get() == ButtonType.OK) {
+                boolean result = productDao.delete(selectedProduct);
+                if (result) {
+                    tvProducts.getItems().remove(selectedProduct);
+                } else {
+                    Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                    errorAlert.setTitle("Error");
+                    errorAlert.setHeaderText("Some error happened.");
+                    errorAlert.showAndWait();
+                }
+            }
+        }
+    }
+
+    @FXML
+    void edit(ActionEvent event) throws IOException, SQLException {
+        Product selectedProduct = tvProducts.getSelectionModel().getSelectedItem();
+        if (selectedProduct == null) {
+            selectWarning();
+        } else {
+            Popup.getInstance().gotoProductEdit(selectedProduct);
+            Popup.getInstance().getStage().show();
+        }
+    }
+
+    @FXML
+    void createNew(ActionEvent event) throws IOException, SQLException {
+        Popup.getInstance().gotoProductEdit(null);
+        Popup.getInstance().getStage().show();
+    }
+
+    @FXML
+    void refresh(ActionEvent event) {
+        buildTableviewData();
+    }
+
+    private void buildTableviewData() {
+        dataList = productDao.selectAll();
+        tvProducts.setItems(dataList);
+//        tcProductId.setCellValueFactory((product) -> {
+//            return product.getValue().getProductIdProperty();
+//        });
+        tcProductName.setCellValueFactory((product) -> {
+            return product.getValue().getProductNameProperty();
+        });
+        tcPrice.setCellValueFactory((product) -> {
+            return product.getValue().getPriceProperty();
+        });
+
+        tcStock.setCellValueFactory((product) -> {
+            return product.getValue().getStockProperty();
+        });
+        tcDescription.setCellValueFactory((product) -> {
+            return product.getValue().getDescriptionProperty();
+        });
+        tcImage.setCellValueFactory((product) -> {
+            return product.getValue().getImageProperty();
+        });
+
+        tcImage.setCellFactory((product) -> {
+            final ImageView imageview = new ImageView();
+            imageview.setFitHeight(200);
+            imageview.setFitWidth(200);
+            imageview.setPreserveRatio(true);
+            TableCell<Product, String> cell = new TableCell<Product, String>() {
+                @Override
+                public void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setGraphic(null);
+                    } else {
+                        if (!item.equals("")) {
+                            Image image = new Image(item);
+                            imageview.setImage(image);
+                            setGraphic(imageview);
+                        } else {
+                            setGraphic(null);
+                        }
+                    }
+                }
+            };
+            return cell;
+        });
+        tcCategory.setCellValueFactory((product) -> {
+            return product.getValue().getCategoryNameProperty();
+        });
+    }
+
+    private void selectWarning() {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("WARNING");
+        alert.setHeaderText("Please select a prodcut to perform thsis operation!");
+        alert.showAndWait();
+    }
+
+    @FXML
+    void search() {
+        buildTableviewData();
+        FilteredList<Product> filteredData = new FilteredList<>(dataList, b -> true);
+        filterField.textProperty().addListener((observable, oldValue, newValue) -> {
+            filteredData.setPredicate(product -> {
+
+                if (newValue == null || newValue.isEmpty()) {
+                    return true;
+                }
+                String lowerCaseFilter = newValue.toLowerCase();
+
+                if (String.valueOf(product.getProductId()).indexOf(lowerCaseFilter) != -1) {
+                    return true;
+                } else if (product.getProductName().toLowerCase().indexOf(lowerCaseFilter) != -1) {
+                    return true;
+                } else if (String.valueOf(product.getPrice()).indexOf(lowerCaseFilter) != -1) {
+                    return true;
+                } else if (String.valueOf(product.getStock()).indexOf(lowerCaseFilter) != -1) {
+                    return true;
+                } else if (product.getDescription().toLowerCase().indexOf(lowerCaseFilter) != -1) {
+                    return true;
+                } else if (product.getImage().toLowerCase().indexOf(lowerCaseFilter) != -1) {
+                    return true;
+                } else if (product.getCategoryName().toLowerCase().indexOf(lowerCaseFilter) != -1) {
+                    return true;
+                } else {
+                    return false;
+                }
+
+            });
+        });
+        SortedList<Product> sortedData = new SortedList<>(filteredData);
+        sortedData.comparatorProperty().bind(tvProducts.comparatorProperty());
+        tvProducts.setItems(sortedData);
+    }
+
+    public void initialize() throws SQLException {
+        buildTableviewData();
+        admin.setText(AdminSession.getInstance().getAdminName());
+    }
+}
